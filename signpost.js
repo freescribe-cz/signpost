@@ -80,9 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
          // Clear UI state
          document.getElementById("open-in-new-tab").checked = false;
          document.getElementById("confirm-before-remove").checked = false;
-         document.getElementById("desktop-background-color").value = "none";
+         document.getElementById("desktop-background-color").value = "#ffffff";
          document.getElementById("desktop-background-image").value = "";
-         document.getElementById("grid-container").style.backgroundColor = "none";
+         document.getElementById("grid-container").style.backgroundColor = "#ffffff";
          document.getElementById("grid-container").style.backgroundImage = "none";
       });
    });
@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
                toggle.textContent = visible ? "[+] " : "[-] ";
             });
 
-            // 👇 Make folders selectable too, if type is 'folder'
+            // Make folders selectable too, if type is 'folder'
             label.addEventListener("click", () => {
                if (type === "folder") {
                   addCustomTile(node);
@@ -259,59 +259,29 @@ document.addEventListener("DOMContentLoaded", () => {
       const tile = document.createElement("div");
       tile.className = "tile";
 
-      const icon = document.createElement("div");
-      icon.className = "tile-icon";
-
-      const content = document.createElement("div");
-      content.className = "tile-content";
-
       // Load global settings once per tile render
       chrome.storage.local.get({ globalSettings: {} }, (res) => {
          const global = res.globalSettings || {};
 
-         // Icon
+         // --- Icon HTML ---
+         let iconHTML = "";
          if (custom.icon) {
-            icon.innerHTML = `<img src="${custom.icon}" width="24" height="24" alt="icon">`;
+            iconHTML = `<img src="${custom.icon}" width="24" height="24" alt="icon">`;
          } else if (data.url) {
             const domain = new URL(data.url).hostname;
-            icon.innerHTML = `<img src="https://www.google.com/s2/favicons?domain=${domain}" width="24" height="24" alt="icon">`;
-         } else {
-            icon.textContent = "📁";
+            iconHTML = `<img src="https://www.google.com/s2/favicons?domain=${domain}" width="24" height="24" alt="icon">`;
          }
 
-         // Title/Link
-         if (data.url) {
-            const link = document.createElement("a");
-            link.href = data.url;
-            link.textContent = data.title || "(no title)";
-            link.target = global.openInNewTab ? "_blank" : "_self";
-            content.appendChild(link);
-         } else {
-            const label = document.createElement("div");
-            label.innerHTML = `<strong>${data.title}</strong><br><em>Folder</em>`;
-            content.appendChild(label);
-         }
-
-         // Background color
-         if (custom.color) {
-            tile.style.backgroundColor = custom.color;
-         }
-
-         // Custom size for folders
-         if (custom.size && data.isFolder) {
-            tile.style.gridColumnEnd = `span ${custom.size.x}`;
-            tile.style.gridRowEnd = `span ${custom.size.y}`;
-         }
-
-         // Menu Icon + Menu
+         // --- Create menu icon ---
          const menuIcon = document.createElement("span");
          menuIcon.className = "tile-menu-icon";
          menuIcon.textContent = "⋮";
 
+         // --- Create menu container ---
          const menu = document.createElement("div");
          menu.className = "tile-menu hidden";
 
-         // Remove
+         // --- Context menu options ---
          const removeOption = document.createElement("button");
          removeOption.textContent = "Remove";
          removeOption.addEventListener("click", () => {
@@ -319,7 +289,6 @@ document.addEventListener("DOMContentLoaded", () => {
                tile.remove();
                removeTile(data.id);
             };
-
             if (global.confirmBeforeRemove) {
                if (confirm("Are you sure you want to remove this tile?")) {
                   doRemove();
@@ -329,7 +298,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
          });
 
-         // Upload icon
          const uploadIconOption = document.createElement("button");
          uploadIconOption.textContent = "Set custom icon";
          const fileInput = document.createElement("input");
@@ -345,14 +313,13 @@ document.addEventListener("DOMContentLoaded", () => {
                const reader = new FileReader();
                reader.onload = (e) => {
                   const base64 = e.target.result;
-                  icon.innerHTML = `<img src="${base64}" width="24" height="24" alt="icon">`;
                   saveCustomSetting(data.id, "icon", base64);
+                  renderAllTiles(); // re-render to apply change
                };
                reader.readAsDataURL(file);
             }
          });
 
-         // Background color
          const colorOption = document.createElement("button");
          colorOption.textContent = "Set background color";
          const colorInput = document.createElement("input");
@@ -367,12 +334,11 @@ document.addEventListener("DOMContentLoaded", () => {
             saveCustomSetting(data.id, "color", color);
          });
 
-         // Append menu items
          menu.appendChild(removeOption);
          menu.appendChild(uploadIconOption);
          menu.appendChild(colorOption);
 
-         // Folder size
+         // Folder-specific: add tile sizing option
          if (data.isFolder) {
             const sizeOption = document.createElement("button");
             sizeOption.textContent = "Set size";
@@ -405,10 +371,63 @@ document.addEventListener("DOMContentLoaded", () => {
             menu.appendChild(sizeOption);
          }
 
-         // Assemble tile
-         tile.appendChild(icon);
+         // Background color
+         if (custom.color) {
+            tile.style.backgroundColor = custom.color;
+         }
+
+         // Tile size for folders
+         if (custom.size && data.isFolder) {
+            tile.style.gridColumnEnd = `span ${custom.size.x}`;
+            tile.style.gridRowEnd = `span ${custom.size.y}`;
+         }
+
+         // ----- Tile Content -----
+         const content = document.createElement("div");
+         content.className = data.url ? "tile-content link" : "tile-content folder";
+
+         // Header
+         const header = document.createElement("div");
+         header.className = "tile-header";
+
+         if (data.url) {
+            // Link tile header = spacer + menu
+            const spacer = document.createElement("div");
+            header.appendChild(spacer);
+            header.appendChild(menuIcon);
+         } else {
+            // Folder tile header = label + menu
+            const folderLabel = document.createElement("div");
+            folderLabel.className = "tile-folder-label";
+            folderLabel.innerHTML = `📁 ${data.title || "(no title)"}`;
+            header.appendChild(folderLabel);
+            header.appendChild(menuIcon);
+         }
+
+         content.appendChild(header);
+
+         // Body
+         if (data.url) {
+            const linkWrapper = document.createElement("a");
+            linkWrapper.href = data.url;
+            linkWrapper.target = global.openInNewTab ? "_blank" : "_self";
+            linkWrapper.className = "tile-link-wrapper";
+
+            const iconContainer = document.createElement("div");
+            iconContainer.className = "tile-icon";
+            iconContainer.innerHTML = iconHTML;
+
+            const title = document.createElement("div");
+            title.className = "tile-title";
+            title.textContent = data.title || "(no title)";
+
+            linkWrapper.appendChild(iconContainer);
+            linkWrapper.appendChild(title);
+            content.appendChild(linkWrapper);
+         }
+
+         // Final assembly
          tile.appendChild(content);
-         tile.appendChild(menuIcon);
          tile.appendChild(menu);
          tile.appendChild(fileInput);
          tile.appendChild(colorInput);
@@ -425,7 +444,6 @@ document.addEventListener("DOMContentLoaded", () => {
          grid.appendChild(tile);
       });
    }
-
 
    function saveCustomSetting(id, field, value) {
       chrome.storage.local.get({ customSettings: {} }, (res) => {
