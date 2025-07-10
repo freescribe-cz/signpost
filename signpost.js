@@ -58,6 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const file = e.target.files[0];
       if (!file) return;
 
+      const MAX_SIZE_MB = 2.5;
+      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+      if (file && file.size > MAX_SIZE_BYTES) {
+         alert(`Image too large. Choose a file under ${MAX_SIZE_MB} MB.`);
+         return;
+      }
+
       const reader = new FileReader();
       reader.onload = function (event) {
          const base64 = event.target.result;
