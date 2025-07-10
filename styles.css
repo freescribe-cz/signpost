@@ -93,14 +93,17 @@ body {
    background: white;
    border-radius: 8px;
    padding: 12px;
-   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
    text-align: center;
    word-wrap: break-word;
-   transition: transform 0.2s ease;
+   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .tile:hover {
-   transform: translateY(-3px);
+   transform: none;
+   /* Prevent shifting */
+   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+   /* Stronger shadow */
 }
 
 .tile a {
@@ -379,6 +382,7 @@ button:hover {
 
 .tile-menu button {
    all: unset;
+   color: #222;
    padding: 8px 12px;
    cursor: pointer;
    text-align: left;
@@ -387,4 +391,38 @@ button:hover {
 
 .tile-menu button:hover {
    background-color: #f0f0f0;
+}
+
+/* Buttons */
+#toolbar button,
+#settings-panel button {
+   background-color: #ffffff;
+   border: 1px solid #ccc;
+   border-radius: 6px;
+   color: #555;
+   padding: 6px 12px;
+   margin: 4px;
+   font-size: 14px;
+   cursor: pointer;
+   transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#toolbar button:hover,
+#settings-panel button:hover {
+   background-color: #f0f0f0;
+   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+#toolbar {
+   padding: 8px;
+   /* display: flex;
+   gap: 8px;
+   background-color: rgba(255, 255, 255, 0.7);
+   border-bottom: 1px solid #ddd; */
+}
+
+#toolbar button,
+#settings-panel button {
+   background: linear-gradient(to bottom, #fafafa, #e0e0e0);
+   border: 1px solid #bbb;
 }
