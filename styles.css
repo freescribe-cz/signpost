@@ -139,6 +139,31 @@ body {
    text-overflow: ellipsis;
 }
 
+.folder-body {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 4px;
+   padding: 4px 8px;
+   overflow: hidden;
+   justify-content: flex-start;
+   align-content: flex-start;
+}
+
+.folder-child-icon {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: rgba(255, 255, 255, 0.3);
+   border-radius: 4px;
+   cursor: pointer;
+   font-size: 18px;
+   transition: background 0.2s;
+}
+
+.folder-child-icon:hover {
+   background: rgba(255, 255, 255, 0.6);
+}
+
 /* Link styling */
 .tile-content.link {
    align-items: center;

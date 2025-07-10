@@ -272,16 +272,14 @@ document.addEventListener("DOMContentLoaded", () => {
             iconHTML = `<img src="https://www.google.com/s2/favicons?domain=${domain}" width="24" height="24" alt="icon">`;
          }
 
-         // --- Create menu icon ---
+         // --- Menu icon + menu setup ---
          const menuIcon = document.createElement("span");
          menuIcon.className = "tile-menu-icon";
          menuIcon.textContent = "⋮";
 
-         // --- Create menu container ---
          const menu = document.createElement("div");
          menu.className = "tile-menu hidden";
 
-         // --- Context menu options ---
          const removeOption = document.createElement("button");
          removeOption.textContent = "Remove";
          removeOption.addEventListener("click", () => {
@@ -289,13 +287,9 @@ document.addEventListener("DOMContentLoaded", () => {
                tile.remove();
                removeTile(data.id);
             };
-            if (global.confirmBeforeRemove) {
-               if (confirm("Are you sure you want to remove this tile?")) {
-                  doRemove();
-               }
-            } else {
-               doRemove();
-            }
+            global.confirmBeforeRemove
+               ? confirm("Are you sure you want to remove this tile?") && doRemove()
+               : doRemove();
          });
 
          const uploadIconOption = document.createElement("button");
@@ -304,9 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
          fileInput.type = "file";
          fileInput.accept = "image/*";
          fileInput.style.display = "none";
-
          uploadIconOption.addEventListener("click", () => fileInput.click());
-
          fileInput.addEventListener("change", () => {
             const file = fileInput.files[0];
             if (file) {
@@ -314,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
                reader.onload = (e) => {
                   const base64 = e.target.result;
                   saveCustomSetting(data.id, "icon", base64);
-                  renderAllTiles(); // re-render to apply change
+                  renderAllTiles();
                };
                reader.readAsDataURL(file);
             }
@@ -325,20 +317,31 @@ document.addEventListener("DOMContentLoaded", () => {
          const colorInput = document.createElement("input");
          colorInput.type = "color";
          colorInput.style.display = "none";
-
          colorOption.addEventListener("click", () => colorInput.click());
-
          colorInput.addEventListener("input", () => {
             const color = colorInput.value;
             tile.style.backgroundColor = color;
             saveCustomSetting(data.id, "color", color);
          });
 
+         const textColorOption = document.createElement("button");
+         textColorOption.textContent = "Set text color";
+         const textColorInput = document.createElement("input");
+         textColorInput.type = "color";
+         textColorInput.style.display = "none";
+         textColorOption.addEventListener("click", () => textColorInput.click());
+         textColorInput.addEventListener("input", () => {
+            const color = textColorInput.value;
+            tile.style.color = color;
+            saveCustomSetting(data.id, "textColor", color);
+         });
+
          menu.appendChild(removeOption);
          menu.appendChild(uploadIconOption);
          menu.appendChild(colorOption);
+         menu.appendChild(textColorOption);
 
-         // Folder-specific: add tile sizing option
+         // Folder-specific size setting
          if (data.isFolder) {
             const sizeOption = document.createElement("button");
             sizeOption.textContent = "Set size";
@@ -346,14 +349,11 @@ document.addEventListener("DOMContentLoaded", () => {
                const modal = document.getElementById("folder-size-modal");
                const widthInput = document.getElementById("folder-width");
                const heightInput = document.getElementById("folder-height");
-
                widthInput.value = custom.size?.x || 2;
                heightInput.value = custom.size?.y || 2;
                modal.classList.remove("hidden");
-
                const applyBtn = document.getElementById("apply-folder-size");
                const cancelBtn = document.getElementById("cancel-folder-size");
-
                applyBtn.onclick = () => {
                   const x = parseInt(widthInput.value, 10);
                   const y = parseInt(heightInput.value, 10);
@@ -364,46 +364,34 @@ document.addEventListener("DOMContentLoaded", () => {
                      modal.classList.add("hidden");
                   }
                };
-
                cancelBtn.onclick = () => modal.classList.add("hidden");
             });
-
             menu.appendChild(sizeOption);
          }
 
-         // Background color
-         if (custom.color) {
-            tile.style.backgroundColor = custom.color;
-         }
-
-         // Tile size for folders
+         if (custom.color) tile.style.backgroundColor = custom.color;
+         if (custom.textColor) tile.style.color = custom.textColor;
          if (custom.size && data.isFolder) {
             tile.style.gridColumnEnd = `span ${custom.size.x}`;
             tile.style.gridRowEnd = `span ${custom.size.y}`;
          }
 
-         // ----- Tile Content -----
+         // --- TILE CONTENT ---
          const content = document.createElement("div");
          content.className = data.url ? "tile-content link" : "tile-content folder";
 
-         // Header
+         // Header row
          const header = document.createElement("div");
          header.className = "tile-header";
-
          if (data.url) {
-            // Link tile header = spacer + menu
-            const spacer = document.createElement("div");
-            header.appendChild(spacer);
-            header.appendChild(menuIcon);
+            header.appendChild(document.createElement("div")); // spacer
          } else {
-            // Folder tile header = label + menu
             const folderLabel = document.createElement("div");
             folderLabel.className = "tile-folder-label";
             folderLabel.innerHTML = `📁 ${data.title || "(no title)"}`;
             header.appendChild(folderLabel);
-            header.appendChild(menuIcon);
          }
-
+         header.appendChild(menuIcon);
          content.appendChild(header);
 
          // Body
@@ -424,19 +412,68 @@ document.addEventListener("DOMContentLoaded", () => {
             linkWrapper.appendChild(iconContainer);
             linkWrapper.appendChild(title);
             content.appendChild(linkWrapper);
+         } else {
+            const body = document.createElement("div");
+            body.className = "folder-body";
+
+            const tileX = custom.size?.x || 2;
+            const tileY = custom.size?.y || 2;
+
+            chrome.storage.local.get({ globalSettings: {} }, (g) => {
+               const tileSize = g.globalSettings.tileSize || 100;
+               const tileWidth = tileSize * tileX;
+               const tileHeight = tileSize * tileY;
+
+               const iconSize = 32;
+               const gap = 4;
+               const padding = 12;
+
+               const iconsPerRow = Math.floor((tileWidth - 2 * padding + gap) / (iconSize + gap));
+               const rows = Math.floor((tileHeight - 60 - 2 * padding + gap) / (iconSize + gap));
+               const maxIcons = iconsPerRow * rows;
+
+               chrome.bookmarks.getChildren(data.id, (children) => {
+                  children.slice(0, maxIcons).forEach((child) => {
+                     const childIcon = document.createElement("div");
+                     childIcon.className = "folder-child-icon";
+                     childIcon.title = child.title || "(no title)";
+                     childIcon.style.width = `${iconSize}px`;
+                     childIcon.style.height = `${iconSize}px`;
+
+                     if (child.url) {
+                        const domain = new URL(child.url).hostname;
+                        childIcon.innerHTML = `<img src="https://www.google.com/s2/favicons?domain=${domain}" width="20" height="20" alt="icon" />`;
+                        childIcon.addEventListener("click", (e) => {
+                           e.stopPropagation();
+                           window.open(child.url, global.openInNewTab ? "_blank" : "_self");
+                        });
+                     } else {
+                        childIcon.textContent = "📁";
+                        childIcon.addEventListener("click", (e) => {
+                           e.stopPropagation();
+                           addCustomTile(child);
+                        });
+                     }
+
+                     body.appendChild(childIcon);
+                  });
+               });
+            });
+
+            content.appendChild(body);
          }
 
-         // Final assembly
+         // --- Assemble tile ---
          tile.appendChild(content);
          tile.appendChild(menu);
          tile.appendChild(fileInput);
          tile.appendChild(colorInput);
+         tile.appendChild(textColorInput);
 
          menuIcon.addEventListener("click", (e) => {
             e.stopPropagation();
             menu.classList.toggle("hidden");
          });
-
          document.addEventListener("click", () => {
             menu.classList.add("hidden");
          });
