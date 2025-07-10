@@ -1,0 +1,11 @@
+{
+  "name": "Signpost: Visual Bookmarks for New Tab",
+  "description": "A visual New Tab extension to organize your bookmarks for quick access",
+  "version": "1.0",
+  "manifest_version": 3,
+  "chrome_url_overrides": {
+    "newtab": "signpost.html"
+  },
+  "permissions": ["bookmarks", "storage"]
+
+}

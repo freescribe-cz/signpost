@@ -1,0 +1,307 @@
+/* styles.css */
+
+body {
+  margin: 0;
+  background: none;
+}
+
+#grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-size, 140px), 1fr));
+  grid-auto-rows: var(--tile-size, 140px);
+  gap: 16px;
+  padding: 20px;
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Global settings panel */
+.settings {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100vh;
+  background: #fff;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 1000;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.settings.hidden {
+  display: none;
+}
+
+.settings h3 {
+  margin-top: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.settings label {
+  display: block;
+  margin: 12px 0 6px;
+}
+
+.settings input[type="checkbox"] {
+  margin-right: 6px;
+}
+
+.settings input[type="color"],
+.settings input[type="file"] {
+  margin-top: 4px;
+  width: 100%;
+}
+
+.settings button {
+  margin-top: 12px;
+  padding: 6px 12px;
+  width: 100%;
+  background-color: #0057a8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.settings button:hover {
+  background-color: #003f7e;
+}
+
+#reset-global-settings {
+  background-color: #777;
+}
+
+#reset-global-settings:hover {
+  background-color: #555;
+}
+
+
+#open-settings {
+  float: right;
+}
+
+/* Tile style */
+.tile {
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  word-wrap: break-word;
+  transition: transform 0.2s ease;
+}
+
+.tile:hover {
+  transform: translateY(-3px);
+}
+
+.tile a {
+  text-decoration: none;
+  color: #222;
+  font-weight: bold;
+}
+
+/* Initial Prompt Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 30, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+button {
+  background: #0057a8;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #003f7e;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Bookmark Tree Modal */
+#bookmark-tree {
+  max-height: 60vh;
+  overflow-y: auto;
+  text-align: left;
+  padding: 0;
+  margin: 1em 0;
+  font-size: 14px;
+}
+
+#bookmark-tree ul {
+  list-style: none;
+  padding-left: 1em;
+  margin: 0;
+}
+
+#bookmark-tree li {
+  margin: 2px 0;
+  line-height: 1.4;
+}
+
+#bookmark-tree span {
+  display: inline-block;
+  padding: 2px 4px;
+}
+
+#bookmark-tree span:hover {
+  background-color: #eee;
+  border-radius: 4px;
+}
+
+#bookmark-tree img {
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Folder Size Modal */
+#folder-size-modal .modal-content {
+  padding: 16px;
+  max-width: 300px;
+  font-size: 14px;
+}
+
+#folder-size-modal label {
+  display: inline-block;
+  margin: 4px 8px 4px 0;
+}
+
+#folder-size-modal input[type="number"] {
+  width: 60px;
+  padding: 4px;
+  margin-right: 12px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#folder-size-modal button {
+  margin: 12px 4px 0 0;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  background-color: #0057a8;
+  color: white;
+  cursor: pointer;
+}
+
+#folder-size-modal #cancel-folder-size {
+  background-color: #777;
+}
+
+#folder-size-modal button:hover {
+  filter: brightness(1.1);
+}
+
+
+/* Tiles */
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 12px;
+}
+
+.tile-icon {
+  margin-bottom: 8px;
+}
+
+.tile-icon img {
+  border-radius: 4px;
+}
+
+.tile-content {
+  text-align: center;
+}
+
+/* Tile Menu Icon */
+.tile-menu-icon {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  display: none;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  padding: 2px 6px;
+  transition: background 0.2s ease;
+}
+
+.tile-menu-icon:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Tile Hover Reveal */
+.tile:hover .tile-menu-icon {
+  display: block;
+}
+
+/* Tile Dropdown Menu */
+.tile-menu {
+  position: absolute;
+  top: 28px;
+  right: 8px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.tile-menu.hidden {
+  display: none;
+}
+
+.tile-menu button {
+  all: unset;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tile-menu button:hover {
+  background-color: #f0f0f0;
+}
+
