@@ -128,16 +128,18 @@ document.addEventListener("DOMContentLoaded", () => {
    // Initial setup
    chrome.storage.local.get("userInitialSetup", (result) => {
       if (!result.userInitialSetup) {
+         // Show the initial setup prompt if no setup is detected
          prompt.classList.remove("hidden");
-      } else if (result.userInitialSetup === "loaded") {
-         loadAllBookmarks();
+      } else {
+         // If setup is complete, load and render tiles from storage
+         chrome.storage.local.get(["userTiles", "customSettings"], (res) => {
+            const tiles = res.userTiles || [];
+            const settings = res.customSettings || {};
+            // Clear the grid before rendering tiles from storage to prevent duplicates
+            grid.innerHTML = "";
+            tiles.forEach(tileData => renderTile(tileData, settings[tileData.id] || {}));
+         });
       }
-
-      chrome.storage.local.get(["userTiles", "customSettings"], (res) => {
-         const tiles = res.userTiles || [];
-         const settings = res.customSettings || {};
-         tiles.forEach(tileData => renderTile(tileData, settings[tileData.id] || {}));
-      });
    });
 
    document.getElementById("load-bookmarks").addEventListener("click", () => {
