@@ -501,16 +501,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
    }
 
-   function saveTile(tileData) {
-      chrome.storage.local.get({ userTiles: [] }, (res) => {
-         const existing = res.userTiles;
-         if (!existing.some((t) => t.id === tileData.id)) {
-            existing.push(tileData);
-            chrome.storage.local.set({ userTiles: existing });
-         }
-      });
-   }
-
    function removeTile(id) {
       chrome.storage.local.get({ userTiles: [] }, (res) => {
          const updated = res.userTiles.filter((t) => t.id !== id);
@@ -525,6 +515,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
          if (!bookmarksBar || !bookmarksBar.children) return;
 
+         const tilesToSave = []; // Array to hold all tile data
          bookmarksBar.children.forEach((node) => {
             if (node.url || (node.children && node.children.length >= 0)) {
                const tileData = {
@@ -533,9 +524,13 @@ document.addEventListener("DOMContentLoaded", () => {
                   url: node.url || null,
                   isFolder: !!node.children
                };
-               renderTile(tileData);
-               saveTile(tileData);
+               renderTile(tileData); // Still render as they are processed
+               tilesToSave.push(tileData); // Add to the array
             }
+         });
+
+         // Save all tiles in a single operation
+         chrome.storage.local.set({ userTiles: tilesToSave }, () => {
          });
       });
    }
