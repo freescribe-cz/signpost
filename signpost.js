@@ -56,15 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addTileToGrid(bookmark) {
-        const content = document.createElement('div');
-        content.classList.add('grid-stack-item-content');
-        content.innerHTML = bookmark.children ? `📁 ${bookmark.title}` : `🔗 ${bookmark.title}`;
+        const tileContent = document.createElement('div');
+        tileContent.classList.add('grid-stack-item-content');
 
-        const tile = {
+        if (bookmark.children) {
+            tileContent.innerHTML = `📁 ${bookmark.title}`;
+        } else {
+            tileContent.innerHTML = `<a href="${bookmark.url}" target="_blank">🔗 ${bookmark.title}</a>`;
+        }
+
+        grid.addWidget({
             x: 0, y: 0, width: 2, height: 2,
-            content: content.outerHTML
-        };
-
-        grid.addWidget(tile);
+            content: tileContent.outerHTML
+        });
     }
 });
