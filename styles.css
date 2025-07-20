@@ -8,6 +8,11 @@ body {
    display: none;
 }
 
+.grid-stack-item {
+   border: solid 1px darkgray;
+   border-radius: 4px;
+}
+
 button {
    background: linear-gradient(to bottom, #fafafa, #e0e0e0);
    border: 1px solid #bbb;
@@ -55,7 +60,7 @@ button:hover {
    display: flex;
    flex-direction: column;
  }
- 
+
  .modal-content .close-btn {
    align-self: flex-end;
    margin-top: 12px;
