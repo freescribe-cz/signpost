@@ -85,3 +85,45 @@ button:hover {
 #bookmark-tree li:hover {
    background-color: rgba(0, 0, 0, 0.05);
 }
+
+/* Tiles */
+.grid-stack-item-content {
+   padding: 8px;
+   overflow: auto;
+   word-wrap: break-word;
+   background-color: rgba(255,255,255,0.8);
+   border-radius: 6px;
+ }
+ 
+ .grid-stack-item-content a.bookmark-link {
+   text-decoration: none;
+   color: inherit;
+   font-weight: bold;
+ }
+ 
+ .folder-title {
+   font-weight: bold;
+   margin-bottom: 6px;
+ }
+ 
+ .folder-list {
+   padding-left: 14px;
+   margin: 0;
+   overflow: auto;
+ }
+ 
+ .folder-list li {
+   margin-bottom: 4px;
+ }
+ 
+ .folder-list a {
+   text-decoration: none;
+   color: inherit;
+   font-size: 0.9em;
+ }
+ 
+ .folder-list a:hover,
+ .bookmark-link:hover {
+   text-decoration: underline;
+ }
+ 
