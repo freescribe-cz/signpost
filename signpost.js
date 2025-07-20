@@ -92,22 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!child.url) return; // Skip subfolders for now
                 childListHTML += `
               <li>
-                <a href="${child.url}" target="_blank">🔗 ${child.title}</a>
+                <a href="${child.url}" title="${child.title}" >🔗</a>
               </li>`;
             });
 
             tileHTML = `
-            <div class="grid-stack-item-content">
               <div class="folder-title">📁 ${bookmark.title}</div>
-              <ul class="folder-list">${childListHTML}</ul>
-            </div>`;
+              <ul class="folder-list">
+                ${childListHTML}
+              </ul>`;
         } else {
             tileHTML = `
-            <div class="grid-stack-item-content">
               <a class="bookmark-link" href="${bookmark.url}" target="_blank">
                 🔗 ${bookmark.title}
               </a>
-            </div>`;
+            `;
         }
 
         // Corrected: the returned value is directly the DOM element
