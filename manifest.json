@@ -1,6 +1,6 @@
 {
-  "name": "Signpost: Visual Bookmarks for New Tab",
-  "description": "A visual New Tab extension to organize your bookmarks for quick access",
+  "name": "Signpost",
+  "description": "Visual Bookmarks for New Tab. Organize your bookmarks in a visual grid for quick access like on a desktop.",
   "version": "1.0",
   "manifest_version": 3,
   "chrome_url_overrides": {
