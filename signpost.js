@@ -1,31 +1,70 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Gridstack on the #desktop container
     const grid = GridStack.init({
         resizable: { autoHide: true, handles: 'se' }
     });
 
-    // Grab toolbar buttons and modals
-    const btnAdd = document.getElementById('add-bookmark');
-    const btnSettings = document.getElementById('open-settings');
+    const btnAdd = document.getElementById('btn-add');
+    const btnSettings = document.getElementById('btn-settings');
     const modalAdd = document.getElementById('bookmark-picker');
-    let modalSet = document.getElementById('modal-settings');
+    const modalSet = document.getElementById('modal-settings');
 
-    // Toggle “Add bookmark” picker
     btnAdd.addEventListener('click', () => {
         modalAdd.classList.toggle('hidden');
         if (modalSet) modalSet.classList.add('hidden');
+        loadBookmarks();
     });
 
-    // Toggle “Settings” panel
     btnSettings.addEventListener('click', () => {
         if (!modalSet) return;
         modalSet.classList.toggle('hidden');
         modalAdd.classList.add('hidden');
     });
 
-    // Close buttons inside modals
     document.querySelectorAll('.modal .close-btn').forEach(btn =>
         btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'))
     );
 
-}); // End of DOMContentLoaded
+    function loadBookmarks() {
+        chrome.bookmarks.getTree(([root]) => {
+            const container = document.getElementById('bookmark-tree');
+            container.innerHTML = '';
+            container.appendChild(createTree(root.children));
+        });
+    }
+
+    function createTree(nodes) {
+        const ul = document.createElement('ul');
+        nodes.forEach(node => {
+            const li = document.createElement('li');
+            li.textContent = node.title || node.url;
+
+            li.addEventListener('click', (e) => {
+                e.stopPropagation();
+                addTileToGrid(node);
+                modalAdd.classList.add('hidden');
+            });
+
+            if (node.children) {
+                li.prepend('📁 ');
+                li.appendChild(createTree(node.children));
+            } else {
+                li.prepend('🔗 ');
+            }
+            ul.appendChild(li);
+        });
+        return ul;
+    }
+
+    function addTileToGrid(bookmark) {
+        const content = document.createElement('div');
+        content.classList.add('grid-stack-item-content');
+        content.innerHTML = bookmark.children ? `📁 ${bookmark.title}` : `🔗 ${bookmark.title}`;
+
+        const tile = {
+            x: 0, y: 0, width: 2, height: 2,
+            content: content.outerHTML
+        };
+
+        grid.addWidget(tile);
+    }
+});

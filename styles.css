@@ -13,6 +13,28 @@ body {
    border-radius: 4px;
 }
 
+.modal {
+   position: fixed;
+   top: 50%;
+   left: 50%;
+   transform: translate(-50%, -50%);
+   background: white;
+   padding: 1rem;
+   border-radius: 8px;
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+   z-index: 1001;
+}
+
+.modal-content {
+   display: flex;
+   flex-direction: column;
+}
+
+.modal-content .close-btn {
+   align-self: flex-end;
+   margin-top: 12px;
+}
+
 button {
    background: linear-gradient(to bottom, #fafafa, #e0e0e0);
    border: 1px solid #bbb;
@@ -39,29 +61,27 @@ button:hover {
    flex-direction: column;
    gap: 1rem;
    padding: 0.5rem;
-   background: rgba(255,255,255,0.8);
+   background: rgba(255, 255, 255, 0.8);
    border-radius: 8px 0 0 8px;
    z-index: 1000;
- }
+}
 
- .modal {
-   position: fixed;
-   top: 50%;
-   left: 50%;
-   transform: translate(-50%, -50%);
-   background: white;
-   padding: 1rem;
-   border-radius: 8px;
-   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-   z-index: 1001;
- }
+#bookmark-tree {
+   max-height: 400px;
+   overflow: auto;
+   padding-left: 10px;
+}
 
- .modal-content {
-   display: flex;
-   flex-direction: column;
- }
+#bookmark-tree ul {
+   list-style: none;
+   padding-left: 16px;
+}
 
- .modal-content .close-btn {
-   align-self: flex-end;
-   margin-top: 12px;
- }
+#bookmark-tree li {
+   cursor: pointer;
+   margin: 4px 0;
+}
+
+#bookmark-tree li:hover {
+   background-color: rgba(0, 0, 0, 0.05);
+}
