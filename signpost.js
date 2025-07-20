@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modalAdd.classList.add('hidden');
     });
 
-    document.querySelectorAll('.modal .close-btn').forEach(btn =>
+    document.querySelectorAll('.modal .btn-close').forEach(btn =>
         btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'))
     );
 
@@ -84,43 +84,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addTileToGrid(bookmark) {
-        const tileContent = document.createElement('div');
-        tileContent.classList.add('grid-stack-item-content');
+        let tileHTML;
 
         if (bookmark.children) {
-            const folderTitle = document.createElement('div');
-            folderTitle.classList.add('folder-title');
-            folderTitle.textContent = `📁 ${bookmark.title}`;
-            tileContent.appendChild(folderTitle);
-
-            const childList = document.createElement('ul');
-            childList.classList.add('folder-list');
-
+            let childListHTML = '';
             bookmark.children.forEach(child => {
-                if (!child.url) return; // Skip sub-folders
-                const item = document.createElement('li');
-                const link = document.createElement('a');
-                link.href = child.url;
-                link.target = '_blank';
-                link.textContent = `🔗 ${child.title}`;
-                item.appendChild(link);
-                childList.appendChild(item);
+                if (!child.url) return; // Skip subfolders for now
+                childListHTML += `
+              <li>
+                <a href="${child.url}" target="_blank">🔗 ${child.title}</a>
+              </li>`;
             });
 
-            tileContent.appendChild(childList);
+            tileHTML = `
+            <div class="grid-stack-item-content">
+              <div class="folder-title">📁 ${bookmark.title}</div>
+              <ul class="folder-list">${childListHTML}</ul>
+            </div>`;
         } else {
-            const link = document.createElement('a');
-            link.classList.add('bookmark-link');
-            link.href = bookmark.url;
-            link.target = '_blank';
-            link.textContent = `🔗 ${bookmark.title}`;
-            tileContent.appendChild(link);
+            tileHTML = `
+            <div class="grid-stack-item-content">
+              <a class="bookmark-link" href="${bookmark.url}" target="_blank">
+                🔗 ${bookmark.title}
+              </a>
+            </div>`;
         }
 
-        grid.addWidget({
+        const newTile = grid.addWidget({
             x: 0, y: 0, width: 3, height: 2,
-            content: tileContent // pass DOM element directly!
+            content: tileHTML
+        });
+
+        makeTileInteractive(newTile.el);
+    }
+
+    // Attach click listeners explicitly after tile insertion
+    function makeTileInteractive(tileEl) {
+        tileEl.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent grid drag event from interfering
+                const url = link.getAttribute('href');
+                window.open(url, '_self');
+            });
         });
     }
+
 
 });
