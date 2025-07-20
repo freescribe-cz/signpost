@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const grid = GridStack.init({
-        resizable: { autoHide: true, handles: 'se' }
-    });
+    const grid = GridStack.init();
 
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');
@@ -39,23 +37,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const li = document.createElement('li');
 
             if (node.children) {
-                // Folder node
+                const expandBtn = document.createElement('span');
+                expandBtn.textContent = '[+] ';
+                expandBtn.style.cursor = 'pointer';
+                expandBtn.style.marginRight = '4px';
+
                 const folderSpan = document.createElement('span');
                 folderSpan.textContent = `📁 ${node.title}`;
                 folderSpan.style.cursor = 'pointer';
+                folderSpan.style.fontWeight = 'bold';
 
                 const childUl = createTree(node.children);
-                childUl.style.display = 'none';  // Initially collapsed
+                childUl.style.display = 'none';
+
+                expandBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isHidden = childUl.style.display === 'none';
+                    childUl.style.display = isHidden ? 'block' : 'none';
+                    expandBtn.textContent = isHidden ? '[-] ' : '[+] ';
+                });
 
                 folderSpan.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    childUl.style.display = childUl.style.display === 'none' ? 'block' : 'none';
+                    addTileToGrid(node);
+                    document.getElementById('bookmark-picker').classList.add('hidden');
                 });
 
+                li.appendChild(expandBtn);
                 li.appendChild(folderSpan);
                 li.appendChild(childUl);
             } else {
-                // Bookmark node
                 li.textContent = `🔗 ${node.title}`;
                 li.style.cursor = 'pointer';
 
@@ -72,34 +83,43 @@ document.addEventListener('DOMContentLoaded', () => {
         return ul;
     }
 
-
     function addTileToGrid(bookmark) {
         const tileContent = document.createElement('div');
         tileContent.classList.add('grid-stack-item-content');
 
         if (bookmark.children) {
-            tileContent.innerHTML = `<div class="folder-title">📁 ${bookmark.title}</div>`;
+            const folderTitle = document.createElement('div');
+            folderTitle.classList.add('folder-title');
+            folderTitle.textContent = `📁 ${bookmark.title}`;
+            tileContent.appendChild(folderTitle);
 
             const childList = document.createElement('ul');
             childList.classList.add('folder-list');
 
             bookmark.children.forEach(child => {
+                if (!child.url) return; // Skip sub-folders
                 const item = document.createElement('li');
-                item.innerHTML = `<a href="${child.url}" target="_blank">🔗 ${child.title}</a>`;
+                const link = document.createElement('a');
+                link.href = child.url;
+                link.target = '_blank';
+                link.textContent = `🔗 ${child.title}`;
+                item.appendChild(link);
                 childList.appendChild(item);
             });
 
             tileContent.appendChild(childList);
         } else {
-            tileContent.innerHTML = `
-            <a class="bookmark-link" href="${bookmark.url}" target="_blank">
-              🔗 ${bookmark.title}
-            </a>`;
+            const link = document.createElement('a');
+            link.classList.add('bookmark-link');
+            link.href = bookmark.url;
+            link.target = '_blank';
+            link.textContent = `🔗 ${bookmark.title}`;
+            tileContent.appendChild(link);
         }
 
         grid.addWidget({
             x: 0, y: 0, width: 3, height: 2,
-            content: tileContent.outerHTML
+            content: tileContent // pass DOM element directly!
         });
     }
 
