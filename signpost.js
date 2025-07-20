@@ -110,24 +110,24 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
         }
 
-        const newTile = grid.addWidget({
+        // Corrected: the returned value is directly the DOM element
+        const newTileEl = grid.addWidget({
             x: 0, y: 0, width: 3, height: 2,
             content: tileHTML
         });
 
-        makeTileInteractive(newTile.el);
+        makeTileInteractive(newTileEl);
     }
 
     // Attach click listeners explicitly after tile insertion
     function makeTileInteractive(tileEl) {
         tileEl.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent grid drag event from interfering
+                e.stopPropagation(); // Prevent grid drag event interference
                 const url = link.getAttribute('href');
-                window.open(url, '_self');
+                window.open(url, '_blank');
             });
         });
     }
-
 
 });
