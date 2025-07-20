@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Corrected: the returned value is directly the DOM element
         const newTileEl = grid.addWidget({
-            x: 0, y: 0, width: 3, height: 2,
+            w: 2, h: 2,
             content: tileHTML
         });
 
