@@ -34,40 +34,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createTree(nodes) {
         const ul = document.createElement('ul');
+
         nodes.forEach(node => {
             const li = document.createElement('li');
-            li.textContent = node.title || node.url;
-
-            li.addEventListener('click', (e) => {
-                e.stopPropagation();
-                addTileToGrid(node);
-                modalAdd.classList.add('hidden');
-            });
 
             if (node.children) {
-                li.prepend('📁 ');
-                li.appendChild(createTree(node.children));
+                // Folder node
+                const folderSpan = document.createElement('span');
+                folderSpan.textContent = `📁 ${node.title}`;
+                folderSpan.style.cursor = 'pointer';
+
+                const childUl = createTree(node.children);
+                childUl.style.display = 'none';  // Initially collapsed
+
+                folderSpan.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    childUl.style.display = childUl.style.display === 'none' ? 'block' : 'none';
+                });
+
+                li.appendChild(folderSpan);
+                li.appendChild(childUl);
             } else {
-                li.prepend('🔗 ');
+                // Bookmark node
+                li.textContent = `🔗 ${node.title}`;
+                li.style.cursor = 'pointer';
+
+                li.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addTileToGrid(node);
+                    document.getElementById('bookmark-picker').classList.add('hidden');
+                });
             }
+
             ul.appendChild(li);
         });
+
         return ul;
     }
+
 
     function addTileToGrid(bookmark) {
         const tileContent = document.createElement('div');
         tileContent.classList.add('grid-stack-item-content');
 
         if (bookmark.children) {
-            tileContent.innerHTML = `📁 ${bookmark.title}`;
+            tileContent.innerHTML = `<div class="folder-title">📁 ${bookmark.title}</div>`;
+
+            const childList = document.createElement('ul');
+            childList.classList.add('folder-list');
+
+            bookmark.children.forEach(child => {
+                const item = document.createElement('li');
+                item.innerHTML = `<a href="${child.url}" target="_blank">🔗 ${child.title}</a>`;
+                childList.appendChild(item);
+            });
+
+            tileContent.appendChild(childList);
         } else {
-            tileContent.innerHTML = `<a href="${bookmark.url}" target="_blank">🔗 ${bookmark.title}</a>`;
+            tileContent.innerHTML = `
+            <a class="bookmark-link" href="${bookmark.url}" target="_blank">
+              🔗 ${bookmark.title}
+            </a>`;
         }
 
         grid.addWidget({
-            x: 0, y: 0, width: 2, height: 2,
+            x: 0, y: 0, width: 3, height: 2,
             content: tileContent.outerHTML
         });
     }
+
 });
