@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Corrected: the returned value is directly the DOM element
         const newTileEl = grid.addWidget({
-            w: 2, h: 2
+            w: 2, h: 2, noResize: false, noMove: false
         });
 
         newTileEl.innerHTML = '<div class="grid-stack-item-content">' + tileHTML + '</div>' + resizeHandle;
