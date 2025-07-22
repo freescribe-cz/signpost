@@ -93,40 +93,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 childListHTML += `
               <li>
                 <a href="${child.url}" title="${child.title}" >🔗</a>
-              </li>`;
+              </li>
+              `;
             });
 
             tileHTML = `
               <div class="folder-title">📁 ${bookmark.title}</div>
               <ul class="folder-list">
                 ${childListHTML}
-              </ul>`;
+              </ul>
+              `;
         } else {
             tileHTML = `
               <a class="bookmark-link" href="${bookmark.url}" target="_blank">
                 🔗 ${bookmark.title}
-              </a>
-            `;
+              </a>`;
         }
 
         // Corrected: the returned value is directly the DOM element
         const newTileEl = grid.addWidget({
-            w: 2, h: 2,
-            content: tileHTML
+            w: 2, h: 2
         });
 
-        makeTileInteractive(newTileEl);
-    }
-
-    // Attach click listeners explicitly after tile insertion
-    function makeTileInteractive(tileEl) {
-        tileEl.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent grid drag event interference
-                const url = link.getAttribute('href');
-                window.open(url, '_blank');
-            });
-        });
+        newTileEl.innerHTML = tileHTML;
     }
 
 });
