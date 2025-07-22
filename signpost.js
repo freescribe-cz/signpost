@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addTileToGrid(bookmark) {
         let tileHTML;
+        const resizeHandle = '<div class="ui-resizable-handle ui-resizable-se" style="z-index: 100; user-select: none;"></div>';
 
         if (bookmark.children) {
             let childListHTML = '';
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             w: 2, h: 2
         });
 
-        newTileEl.innerHTML = '<div class="grid-stack-item-content">' + tileHTML + '</div>';
+        newTileEl.innerHTML = '<div class="grid-stack-item-content">' + tileHTML + '</div>' + resizeHandle;
     }
 
 });
