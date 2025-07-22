@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
             w: 2, h: 2
         });
 
-        newTileEl.innerHTML = tileHTML;
+        newTileEl.innerHTML = '<div class="grid-stack-item-content"' + tileHTML + '</div>';
     }
 
 });
