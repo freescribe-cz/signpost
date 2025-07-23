@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const grid = GridStack.init();
+    // Set how content is applied to widgets
+    GridStack.renderCB = function(el, w) {
+        el.innerHTML = w.content;
+    };
 
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');
@@ -85,8 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addTileToGrid(bookmark) {
         let tileHTML;
-        const resizeHandle = '<div class="ui-resizable-handle ui-resizable-se" style="z-index: 100; user-select: none;"></div>';
-
+        
         if (bookmark.children) {
             let childListHTML = '';
             bookmark.children.forEach(child => {
@@ -113,10 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Corrected: the returned value is directly the DOM element
         const newTileEl = grid.addWidget({
-            w: 2, h: 2, noResize: false, noMove: false
+            w: 2, h: 2, content: tileHTML
         });
-
-        newTileEl.innerHTML = '<div class="grid-stack-item-content">' + tileHTML + '</div>' + resizeHandle;
     }
 
 });
