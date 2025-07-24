@@ -94,39 +94,33 @@ button:hover {
    padding: 8px;
    overflow: auto;
    word-wrap: break-word;
-   background-color: rgba(255,255,255,0.8);
+   background-color: rgba(255, 255, 255, 0.8);
    border-radius: 6px;
- }
- 
- .grid-stack-item-content a.bookmark-link {
+}
+
+a.bookmark-link {
    text-decoration: none;
    color: inherit;
    font-weight: bold;
- }
- 
- .folder-title {
+}
+
+.folder-title {
    font-weight: bold;
    margin-bottom: 6px;
- }
- 
- .folder-list {
+}
+
+.folder-content {
    padding-left: 14px;
    margin: 0;
    overflow: auto;
- }
- 
- .folder-list li {
+}
+
+.folder-content li {
    margin-bottom: 4px;
- }
- 
- .folder-list a {
+}
+
+.folder-content a {
    text-decoration: none;
    color: inherit;
    font-size: 0.9em;
- }
- 
- .folder-list a:hover,
- .bookmark-link:hover {
-   text-decoration: underline;
- }
- 
+}

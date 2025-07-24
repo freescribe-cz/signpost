@@ -96,17 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
             bookmark.children.forEach(child => {
                 if (!child.url) return; // Skip subfolders for now
                 childListHTML += `
-              <li>
-                <a href="${child.url}" title="${child.title}" >🔗</a>
-              </li>
+              <span class="bookmark-item">
+                <a class="bookmark-link" href="${child.url}" title="${child.title}" >🔗</a>
+              </span>
               `;
             });
 
             tileHTML = `
               <div class="folder-title">📁 ${bookmark.title}</div>
-              <ul class="folder-list">
+              <div class="folder-content">
                 ${childListHTML}
-              </ul>
+              </div>
               `;
         } else {
             // Links
