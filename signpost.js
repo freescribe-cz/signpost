@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         // Folder
                         contentHTML = `
-    <span class="bookmark-link bookmark-folder" title="${child.title}">📁</span>
+    <span class="bookmark-link bookmark-folder" title="${child.title}" data-id="${child.id}">📁</span>
     `;
                     }
                     childListHTML += `
@@ -175,6 +175,20 @@ document.addEventListener('DOMContentLoaded', () => {
         tileEl.querySelector('.remove-tile')?.addEventListener('click', () => {
             grid.removeWidget(tileEl);
         });
+
+        // Add click listeners to child folders
+        tileEl.querySelectorAll('.bookmark-folder').forEach(folderEl => {
+            folderEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const folderId = folderEl.getAttribute('data-id');
+                chrome.bookmarks.getSubTree(folderId, (results) => {
+                    if (results && results[0]) {
+                        addTileToGrid(results[0]);
+                    }
+                });
+            });
+        });
+
     }
 
 });
