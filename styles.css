@@ -29,8 +29,6 @@ body {
    border-radius: 8px;
    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
    z-index: 1001;
-   width: 300px;
-   height: 80vh;
    overflow-y: auto;
 }
 
@@ -76,10 +74,12 @@ button:hover {
 }
 
 #bookmark-tree {
-   max-height: 400px;
+   max-height: 600px;
    overflow: auto;
    padding-left: 10px;
    font-size: 14px;
+   width: 400px;
+   height: 60vh;
 }
 
 #bookmark-tree ul {
@@ -97,10 +97,10 @@ button:hover {
 }
 
 .favicon-tree {
-  width: 14px;
-  height: 14px;
-  vertical-align: text-bottom;
-  margin-right: 6px;
+   width: 14px;
+   height: 14px;
+   vertical-align: text-bottom;
+   margin-right: 6px;
 }
 
 /* Tiles */
@@ -145,37 +145,38 @@ button:hover {
 }
 
 .folder-content {
-   display: flex;
+   display: grid;
+   grid-template-columns: repeat(auto-fill, 20px);
    flex-wrap: wrap;
    gap: 6px;
    justify-content: flex-start;
-   align-items: flex-start;
-   width: 100%;
+   align-content: start;
    overflow-y: auto;
 }
 
-
 .bookmark-item {
+   display: inline-block;
    flex: 0 0 auto;
 }
 
 .bookmark-link {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+   display: inline-flex;
+   max-width: 100%;
+   max-height: 20px;
+   line-height: 1;
+   text-align: center;
+   text-decoration: none;
+   color: inherit;
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
 }
 
 .favicon-large {
-  width: 32px;
-  height: 32px;
-  display: block;
-  margin: 0 auto 4px;
+   width: 32px;
+   height: 32px;
+   display: block;
+   margin: 0 auto 4px;
 }
 
 .tile-footer {

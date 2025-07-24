@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     e.stopPropagation();
                     const isHidden = childUl.style.display === 'none';
                     childUl.style.display = isHidden ? 'block' : 'none';
-                    expandBtn.textContent = isHidden ? '[-] ' : '[+] ';
+                    expandBtn.textContent = isHidden ? '[−] ' : '[+] ';
                 });
 
                 folderSpan.addEventListener('click', (e) => {
