@@ -98,16 +98,26 @@ document.addEventListener('DOMContentLoaded', () => {
             let childListHTML = '';
             if (bookmark.children) {
                 bookmark.children.forEach(child => {
-                    if (!child.url) return; // Skip subfolders for now
-                    const childHostname = new URL(child.url).hostname;
-                    const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${childHostname}`;
+                    let contentHTML = '';
+                    if (child.url) {
+                        // Bookmark link
+                        const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${new URL(child.url).hostname}`;
+                        contentHTML = `
+    <a class="bookmark-link" href="${child.url}" title="${child.title}">
+        <img class="favicon" src="${faviconURL}"/>
+    </a>
+    `;
+                    } else {
+                        // Folder
+                        contentHTML = `
+    <span class="bookmark-link bookmark-folder" title="${child.title}">📁</span>
+    `;
+                    }
                     childListHTML += `
-                <span class="bookmark-item">
-                    <a class="bookmark-link" href="${child.url}" title="${child.title}" >
-                    <img class="favicon" src="${faviconURL}"/>
-                    </a>
-                </span>
-              `;
+    <div class="bookmark-item">
+      ${contentHTML}
+    </div>
+  `;
                 });
             }
             tileHeaderTitleText = `📁 ${bookmark.title}`;
