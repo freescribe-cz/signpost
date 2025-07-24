@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let tileHTML;
         
         if (bookmark.children) {
+            // Folders
             let childListHTML = '';
             bookmark.children.forEach(child => {
                 if (!child.url) return; // Skip subfolders for now
@@ -108,15 +109,15 @@ document.addEventListener('DOMContentLoaded', () => {
               </ul>
               `;
         } else {
+            // Links
             tileHTML = `
               <a class="bookmark-link" href="${bookmark.url}" target="_blank">
                 🔗 ${bookmark.title}
               </a>`;
         }
 
-        // Corrected: the returned value is directly the DOM element
-        const newTileEl = grid.addWidget({
-            w: 2, h: 2, content: tileHTML
+        grid.addWidget({
+            w: 1, h: 1, content: tileHTML
         });
     }
 
