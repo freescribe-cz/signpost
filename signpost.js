@@ -148,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
             `;
-        tileFooterHTML = '<div class="tile-footer"><div class="tile-drag-handle">⤨</div></div>'
         const tileHTML = `
             ${tileHeaderHTML}
             ${tileBodyHTML}

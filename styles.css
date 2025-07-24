@@ -116,8 +116,7 @@ button:hover {
 }
 
 .tile-header,
-.tile-body,
-.tile-footer {
+.tile-body {
    width: 100%;
 }
 
@@ -206,12 +205,6 @@ button:hover {
    height: 32px;
    display: block;
    margin: 0 auto 4px;
-}
-
-.tile-footer {
-   display: flex;
-   justify-content: flex-start;
-   align-items: center;
 }
 
 .tile-drag-handle {
