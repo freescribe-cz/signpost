@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let tileHeaderHTML;
         let tileBodyHTML;
         let tileFooterHTML;
+        let tileHeaderTitleText;
 
         if (!bookmark.url) { // FOLDERS
             let childListHTML = '';
@@ -109,12 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
               `;
                 });
             }
-            tileHeaderHTML = `
-            <div class="tile-header">
-              <div class="folder-title">📁 ${bookmark.title}</div>
-              <div class="tile-menu-icon">⁝</div>
-            </div>
-            `;
+            tileHeaderTitleText = `📁 ${bookmark.title}`;
             tileBodyHTML = `
               <div class="tile-body folder-content">
                 ${childListHTML}
@@ -123,12 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else { // LINKS
             const hostname = new URL(bookmark.url).hostname;
             const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${hostname}`;
-            tileHeaderHTML = `
-            <div class="tile-header">
-              <div class="folder-title"></div>
-              <div class="tile-menu-icon">⁝</div>
-            </div>
-            `;
+            tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">
                 <a class="bookmark-link" href="${bookmark.url}">
@@ -138,15 +129,41 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               `;
         }
+        tileHeaderHTML = `
+            <div class="tile-header">
+                <div class="folder-title">${tileHeaderTitleText}</div>
+                <div class="tile-menu-icon">⁝</div>
+                <div class="tile-menu hidden">
+                  <div class="tile-menu-item remove-tile">Remove</div>
+                </div>
+            </div>
+            `;
         tileFooterHTML = '<div class="tile-footer"><div class="tile-drag-handle">⤨</div></div>'
         const tileHTML = `
             ${tileHeaderHTML}
             ${tileBodyHTML}
-            ${tileFooterHTML}
         `;
 
         grid.addWidget({
             w: 1, h: 1, content: tileHTML
+        });
+
+        addWidgetListeners();
+    }
+
+    function addWidgetListeners() {
+        const tileEl = grid.engine.nodes[grid.engine.nodes.length - 1].el;
+
+        // Toggle menu on icon click
+        tileEl.querySelector('.tile-menu-icon')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = tileEl.querySelector('.tile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Remove widget on menu click
+        tileEl.querySelector('.remove-tile')?.addEventListener('click', () => {
+            grid.removeWidget(tileEl);
         });
     }
 

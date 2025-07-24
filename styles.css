@@ -126,11 +126,46 @@ button:hover {
    justify-content: space-between;
    align-items: center;
    margin-bottom: 6px;
+   position: relative;
 }
 
 .tile-menu-icon {
+   display: none;
+   background: #eee;
+   padding: 2px 6px;
+   border-radius: 4px;
    cursor: pointer;
+   user-select: none;
    font-weight: bold;
+}
+
+.grid-stack-item-content:hover .tile-menu-icon {
+   display: inline-block;
+}
+
+.tile-menu {
+   position: absolute;
+   right: 8px;
+   top: 28px;
+   background: white;
+   border: 1px solid #ccc;
+   border-radius: 4px;
+   z-index: 10;
+   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.tile-menu.hidden {
+   display: none;
+}
+
+.tile-menu-item {
+   padding: 6px 10px;
+   cursor: pointer;
+   font-size: 14px;
+}
+
+.tile-menu-item:hover {
+   background-color: #eee;
 }
 
 .tile-body {
