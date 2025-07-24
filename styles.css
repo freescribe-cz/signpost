@@ -100,8 +100,6 @@ button:hover {
 
 a.bookmark-link {
    text-decoration: none;
-   color: inherit;
-   font-weight: bold;
 }
 
 .folder-title {
@@ -113,14 +111,4 @@ a.bookmark-link {
    padding-left: 14px;
    margin: 0;
    overflow: auto;
-}
-
-.folder-content li {
-   margin-bottom: 4px;
-}
-
-.folder-content a {
-   text-decoration: none;
-   color: inherit;
-   font-size: 0.9em;
 }
