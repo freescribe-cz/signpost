@@ -79,6 +79,7 @@ button:hover {
    max-height: 400px;
    overflow: auto;
    padding-left: 10px;
+   font-size: 14px;
 }
 
 #bookmark-tree ul {
@@ -93,6 +94,13 @@ button:hover {
 
 #bookmark-tree li:hover {
    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.favicon-tree {
+  width: 14px;
+  height: 14px;
+  vertical-align: text-bottom;
+  margin-right: 6px;
 }
 
 /* Tiles */

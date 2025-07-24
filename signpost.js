@@ -71,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.appendChild(folderSpan);
                 li.appendChild(childUl);
             } else {
-                li.textContent = `🔗 ${node.title}`;
+                const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${new URL(node.url).hostname}`;
+                li.innerHTML = `<img class="favicon-tree" src="${faviconURL}"/> ${node.title}`;
                 li.style.cursor = 'pointer';
 
                 li.addEventListener('click', (e) => {
