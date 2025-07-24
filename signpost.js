@@ -97,32 +97,52 @@ document.addEventListener('DOMContentLoaded', () => {
             if (bookmark.children) {
                 bookmark.children.forEach(child => {
                     if (!child.url) return; // Skip subfolders for now
+                    const childHostname = new URL(child.url).hostname;
+                    const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${childHostname}`;
                     childListHTML += `
                 <span class="bookmark-item">
-                    <a class="bookmark-link" href="${child.url}" title="${child.title}" >🔗</a>
+                    <a class="bookmark-link" href="${child.url}" title="${child.title}" >
+                    <img class="favicon" src="${faviconURL}"/>
+                    </a>
                 </span>
               `;
                 });
             }
             tileHeaderHTML = `
+            <div class="tile-header">
               <div class="folder-title">📁 ${bookmark.title}</div>
               <div class="tile-menu-icon">⁝</div>
-              `;
+            </div>
+            `;
             tileBodyHTML = `
-              <div class="folder-content">
+              <div class="tile-body folder-content">
                 ${childListHTML}
               </div>
               `;
         } else { // LINKS
-            tileHeaderHTML = '<div></div><div class="tile-menu-icon">⁝</div>'
+            const hostname = new URL(bookmark.url).hostname;
+            const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${hostname}`;
+            tileHeaderHTML = `
+            <div class="tile-header">
+              <div class="folder-title"></div>
+              <div class="tile-menu-icon">⁝</div>
+            </div>
+            `;
             tileBodyHTML = `
-              <a class="bookmark-link" href="${bookmark.url}" target="_blank">
-                <p>🔗</p>
-                <p>${bookmark.title}</p>
-              </a>`;
+              <div class="tile-body center">
+                <a class="bookmark-link" href="${bookmark.url}">
+                    <img class="favicon-large" src="${faviconURL}"/>
+                    <p>${bookmark.title}</p>
+                </a>
+              </div>
+              `;
         }
-        tileFooterHTML = '<div class="tile-drag-handle">⤨</div>'
-        const tileHTML = tileHeaderHTML + tileBodyHTML + tileFooterHTML;
+        tileFooterHTML = '<div class="tile-footer"><div class="tile-drag-handle">⤨</div></div>'
+        const tileHTML = `
+            ${tileHeaderHTML}
+            ${tileBodyHTML}
+            ${tileFooterHTML}
+        `;
 
         grid.addWidget({
             w: 1, h: 1, content: tileHTML

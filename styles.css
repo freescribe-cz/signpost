@@ -8,6 +8,12 @@ body {
    display: none;
 }
 
+.center {
+   align-items: center;
+   text-align: center;
+   justify-content: center;
+}
+
 .grid-stack-item-content {
    border: solid 1px darkgray;
    border-radius: 4px;
@@ -96,10 +102,33 @@ button:hover {
    word-wrap: break-word;
    background-color: rgba(255, 255, 255, 0.8);
    border-radius: 6px;
+   display: flex;
+   flex-direction: column;
+   box-sizing: border-box;
 }
 
-a.bookmark-link {
-   text-decoration: none;
+.tile-header,
+.tile-body,
+.tile-footer {
+   width: 100%;
+}
+
+.tile-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 6px;
+}
+
+.tile-menu-icon {
+   cursor: pointer;
+   font-weight: bold;
+}
+
+.tile-body {
+   flex-grow: 1;
+   display: flex;
+   overflow: auto;
 }
 
 .folder-title {
@@ -108,7 +137,47 @@ a.bookmark-link {
 }
 
 .folder-content {
-   padding-left: 14px;
-   margin: 0;
-   overflow: auto;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 6px;
+   justify-content: flex-start;
+   align-items: flex-start;
+   width: 100%;
+   overflow-y: auto;
+}
+
+
+.bookmark-item {
+   flex: 0 0 auto;
+}
+
+.bookmark-link {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.favicon-large {
+  width: 32px;
+  height: 32px;
+  display: block;
+  margin: 0 auto 4px;
+}
+
+.tile-footer {
+   display: flex;
+   justify-content: flex-start;
+   align-items: center;
+}
+
+.tile-drag-handle {
+   cursor: move;
+   font-weight: bold;
+   font-size: 150%;
 }
