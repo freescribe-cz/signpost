@@ -1,9 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const grid = GridStack.init();
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content;
     };
+    const grid = GridStack.init();
+    // Save layout on changes
+    grid.on('change', saveLayout);
+
+    // Load layout on startup
+    chrome.storage.sync.get({ tiles: [] }, ({ tiles }) => {
+        tiles.forEach(tile => {
+            chrome.bookmarks.getSubTree(tile.id, (results) => {
+                if (results && results[0]) {
+                    addTileToGrid(results[0], tile); // uses stored x/y/w/h
+                }
+            });
+        });
+        console.log("Tiles loaded: ", tiles.length, tiles);
+    });
 
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');
@@ -25,6 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.modal .btn-close').forEach(btn =>
         btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'))
     );
+
+    // Saving layout
+    function saveLayout() {
+        const layout = grid.save(false); // false = don't serialize content
+        chrome.storage.sync.set({ tiles: layout });
+        console.log("Saving layout:", layout.length, layout);
+    }
 
     function loadBookmarks() {
         chrome.bookmarks.getTree(([root]) => {
@@ -88,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return ul;
     }
 
-    function addTileToGrid(bookmark) {
+    function addTileToGrid(bookmark, pos = { x: 0, y: 0, w: 1, h: 1 }) {
         let tileHeaderHTML;
         let tileBodyHTML;
         let tileFooterHTML;
@@ -96,30 +117,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!bookmark.url) { // FOLDERS
             let childListHTML = '';
-            if (bookmark.children) {
-                bookmark.children.forEach(child => {
-                    let contentHTML = '';
-                    if (child.url) {
-                        // Bookmark link
-                        const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${new URL(child.url).hostname}`;
-                        contentHTML = `
+            const children = bookmark.children || [];
+            children.forEach(child => {
+                let contentHTML = '';
+                if (child.url) {
+                    // Bookmark link
+                    const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${new URL(child.url).hostname}`;
+                    contentHTML = `
     <a class="bookmark-link" href="${child.url}" title="${child.title}">
         <img class="favicon" src="${faviconURL}"/>
     </a>
     `;
-                    } else {
-                        // Folder
-                        contentHTML = `
+                } else {
+                    // Folder
+                    contentHTML = `
     <span class="bookmark-link bookmark-folder" title="${child.title}" data-id="${child.id}">📁</span>
     `;
-                    }
-                    childListHTML += `
+                }
+                childListHTML += `
     <div class="bookmark-item">
       ${contentHTML}
     </div>
   `;
-                });
-            }
+            });
             tileHeaderTitleText = `📁 ${bookmark.title}`;
             tileBodyHTML = `
               <div class="tile-body folder-content">
@@ -127,8 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               `;
         } else { // LINKS
-            const hostname = new URL(bookmark.url).hostname;
-            const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${hostname}`;
+            const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${new URL(bookmark.url).hostname}`;
             tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">
@@ -153,11 +172,23 @@ document.addEventListener('DOMContentLoaded', () => {
             ${tileBodyHTML}
         `;
 
-        grid.addWidget({
-            w: 1, h: 1, content: tileHTML
+        const widget = grid.addWidget({
+            x: pos.x, y: pos.y, w: pos.w, h: pos.h,
+            content: tileHTML,
+            id: `${bookmark.id}`
         });
+        console.log("Widget added, ID: ", bookmark.id);
+
+        // After it's mounted
+        /* const el = widget.el || grid.engine.nodes[grid.engine.nodes.length - 1].el;
+        el.dataset.gsId = `tile-${bookmark.id}`; // GridStack reads on save()
+        el.dataset.bookmarkId = bookmark.id;
+        el.id = `tile-${bookmark.id}`; // set DOM id for lookup in saveLayout
+        */
 
         addWidgetListeners();
+
+        saveLayout(); // Save every time a new tile is added
     }
 
     function addWidgetListeners() {
@@ -173,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove widget on menu click
         tileEl.querySelector('.remove-tile')?.addEventListener('click', () => {
             grid.removeWidget(tileEl);
+            saveLayout();
         });
 
         // Add click listeners to child folders
@@ -180,9 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
             folderEl.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const folderId = folderEl.getAttribute('data-id');
+                const widgetPos = { x: 0, y: 0, w: 1, h: 1 }
                 chrome.bookmarks.getSubTree(folderId, (results) => {
                     if (results && results[0]) {
-                        addTileToGrid(results[0]);
+                        addTileToGrid(results[0], widgetPos);
                     }
                 });
             });
