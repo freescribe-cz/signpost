@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const grid = GridStack.init();
     // Set how content is applied to widgets
-    GridStack.renderCB = function(el, w) {
+    GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content;
     };
 
@@ -88,33 +88,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addTileToGrid(bookmark) {
-        let tileHTML;
-        
-        if (bookmark.children) {
-            // Folders
-            let childListHTML = '';
-            bookmark.children.forEach(child => {
-                if (!child.url) return; // Skip subfolders for now
-                childListHTML += `
-              <span class="bookmark-item">
-                <a class="bookmark-link" href="${child.url}" title="${child.title}" >🔗</a>
-              </span>
-              `;
-            });
+        let tileHeaderHTML;
+        let tileBodyHTML;
+        let tileFooterHTML;
 
-            tileHTML = `
+        if (!bookmark.url) { // FOLDERS
+            let childListHTML = '';
+            if (bookmark.children) {
+                bookmark.children.forEach(child => {
+                    if (!child.url) return; // Skip subfolders for now
+                    childListHTML += `
+                <span class="bookmark-item">
+                    <a class="bookmark-link" href="${child.url}" title="${child.title}" >🔗</a>
+                </span>
+              `;
+                });
+            }
+            tileHeaderHTML = `
               <div class="folder-title">📁 ${bookmark.title}</div>
+              <div class="tile-menu-icon">⁝</div>
+              `;
+            tileBodyHTML = `
               <div class="folder-content">
                 ${childListHTML}
               </div>
               `;
-        } else {
-            // Links
-            tileHTML = `
+        } else { // LINKS
+            tileHeaderHTML = '<div></div><div class="tile-menu-icon">⁝</div>'
+            tileBodyHTML = `
               <a class="bookmark-link" href="${bookmark.url}" target="_blank">
-                🔗 ${bookmark.title}
+                <p>🔗</p>
+                <p>${bookmark.title}</p>
               </a>`;
         }
+        tileFooterHTML = '<div class="tile-drag-handle">⤨</div>'
+        const tileHTML = tileHeaderHTML + tileBodyHTML + tileFooterHTML;
 
         grid.addWidget({
             w: 1, h: 1, content: tileHTML
