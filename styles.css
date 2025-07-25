@@ -160,14 +160,24 @@ button:hover {
 
 /* Tiles */
 .grid-stack-item-content {
-   padding: 8px;
    overflow: auto;
    word-wrap: break-word;
-   background-color: rgba(255, 255, 255, 0.8);
    border-radius: 6px;
    display: flex;
    flex-direction: column;
    box-sizing: border-box;
+   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tile {
+   padding: 8px;
+   overflow: auto;
+   word-wrap: break-word;
+   border-radius: 6px;
+   display: flex;
+   flex-direction: column;
+   box-sizing: border-box;
+   height: 100%;
 }
 
 .tile-header,
@@ -176,7 +186,6 @@ button:hover {
 }
 
 .tile-header {
-   background-color: rgba(255, 255, 255, 0.75);
    display: flex;
    justify-content: space-between;
    align-items: center;
@@ -232,6 +241,13 @@ button:hover {
 
 .tile-menu-item:hover {
    background-color: #eee;
+}
+
+.tile-color-picker {
+   position: absolute;
+   top: 32px;
+   right: 8px;
+   z-index: 20;
 }
 
 .tile-body {

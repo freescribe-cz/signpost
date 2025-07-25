@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content;
+        if (w.backgroundColor) {
+            const content = el.querySelector('.tile');
+            if (content) content.style.backgroundColor = w.backgroundColor;
+        }
     };
     const grid = GridStack.init();
     // Save layout on changes
@@ -132,7 +136,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Saving layout
     function saveLayout() {
-        const layout = grid.save(false); // false = don't serialize content
+        const layout = grid.engine.nodes.map(node => {
+            return {
+                x: node.x,
+                y: node.y,
+                w: node.w,
+                h: node.h,
+                id: node.id,
+                backgroundColor: node.backgroundColor || node.el?.querySelector('.tile')?.style.backgroundColor || ''
+            };
+        });
         chrome.storage.sync.set({ tiles: layout });
         console.log("Saving layout:", layout.length, layout);
     }
@@ -302,28 +315,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="folder-title">${tileHeaderTitleText}</div>
                 <div class="tile-menu-icon">⁝</div>
                 <div class="tile-menu hidden">
-                  <div class="tile-menu-item remove-tile">Remove</div>
+                  <div class="tile-menu-item remove-tile">Remove</div><div class="tile-menu-item set-bg-color">Set background color</div>
                 </div>
             </div>
             `;
         const tileHTML = `
+            <div class="tile">
             ${tileHeaderHTML}
             ${tileBodyHTML}
+            </div>
         `;
+
+
+        console.log("Widget bg: ", pos?.backgroundColor);
 
         const widget = grid.addWidget({
             x: pos.x, y: pos.y, w: pos.w, h: pos.h,
             content: tileHTML,
-            id: `${bookmark.id}`
+            id: `${bookmark.id}`,
+            backgroundColor: pos?.backgroundColor || ''
         });
         console.log("Widget added, ID: ", bookmark.id);
 
-        // After it's mounted
-        /* const el = widget.el || grid.engine.nodes[grid.engine.nodes.length - 1].el;
-        el.dataset.gsId = `tile-${bookmark.id}`; // GridStack reads on save()
-        el.dataset.bookmarkId = bookmark.id;
-        el.id = `tile-${bookmark.id}`; // set DOM id for lookup in saveLayout
-        */
+        if (pos?.backgroundColor) {
+            requestAnimationFrame(() => {
+                const content = widget.el?.querySelector('.tile');
+                if (content) content.style.backgroundColor = pos.backgroundColor;
+            });
+        }
 
         addWidgetListeners();
 
@@ -346,6 +365,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 grid.removeWidget(tileEl);
                 saveLayout();
             }
+        });
+        // Set widget background color
+        tileEl.querySelector('.set-bg-color')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            tileEl.querySelector('.tile-menu')?.classList.add('hidden');
+
+            openColorPicker((color) => {
+                const content = tileEl.querySelector('.tile');
+                if (content) content.style.backgroundColor = color;
+                const node = grid.engine.nodes.find(n => n.el === tileEl);
+                if (node) node.backgroundColor = color;
+
+                saveLayout();
+            });
         });
 
         // Add click listeners to child folders
@@ -382,6 +415,31 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+    }
+
+    function openColorPicker(onChange) {
+        const picker = document.createElement('input');
+        picker.type = 'color';
+        picker.style.position = 'absolute';
+        picker.style.left = '-9999px';
+
+        picker.addEventListener('input', () => {
+            onChange(picker.value);
+        });
+
+        // Remove if user clicks away
+        const cleanup = () => {
+            document.body.removeChild(picker);
+            document.removeEventListener('click', handleClickOutside);
+        };
+
+        const handleClickOutside = (e) => {
+            if (e.target !== picker) cleanup();
+        };
+
+        document.addEventListener('click', handleClickOutside);
+        document.body.appendChild(picker);
+        picker.click();
     }
 
 });
