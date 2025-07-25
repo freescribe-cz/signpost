@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');
     const modalAdd = document.getElementById('bookmark-picker');
-    const modalSet = document.getElementById('modal-settings');
+    const modalSet = document.getElementById('settings-panel');
 
     btnAdd.addEventListener('click', () => {
         modalAdd.classList.toggle('hidden');
@@ -32,13 +32,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnSettings.addEventListener('click', () => {
         if (!modalSet) return;
-        modalSet.classList.toggle('hidden');
+        const isVisible = modalSet.classList.contains('visible');
+        modalSet.classList.toggle('visible', !isVisible);
+        modalSet.classList.toggle('hidden', isVisible);
         modalAdd.classList.add('hidden');
     });
 
     document.querySelectorAll('.modal .btn-close').forEach(btn =>
         btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'))
     );
+
+    document.querySelector('#settings-panel .btn-close')?.addEventListener('click', () => {
+        modalSet.classList.remove('visible');
+        modalSet.classList.add('hidden');
+    });
 
     // Saving layout
     function saveLayout() {
