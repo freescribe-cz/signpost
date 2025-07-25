@@ -27,18 +27,25 @@ document.addEventListener('DOMContentLoaded', () => {
         desktopBackgroundImage: null
     };
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
+    const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
 
     // Load and apply settings
     chrome.storage.sync.get(['globalSettings'], (data) => {
         Object.assign(globalSettings, data.globalSettings || {});
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
+        confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
     });
     // Save updated settings on change
     openInNewTabCheckbox.addEventListener('change', () => {
         globalSettings.openInNewTab = openInNewTabCheckbox.checked;
         chrome.storage.sync.set({ globalSettings });
     });
+    confirmBeforeRemoveCheckbox.addEventListener('change', () => {
+        globalSettings.confirmBeforeRemove = confirmBeforeRemoveCheckbox.checked;
+        chrome.storage.sync.set({ globalSettings });
+    });
 
+    // Set up buttons and modals
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');
     const modalAdd = document.getElementById('bookmark-picker');
@@ -279,8 +286,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Remove widget on menu click
         tileEl.querySelector('.remove-tile')?.addEventListener('click', () => {
-            grid.removeWidget(tileEl);
-            saveLayout();
+            if (!globalSettings.confirmBeforeRemove || confirm("Remove this widget?")) {
+                grid.removeWidget(tileEl);
+                saveLayout();
+            }
         });
 
         // Add click listeners to child folders
