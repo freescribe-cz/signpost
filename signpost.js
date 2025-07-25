@@ -7,7 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (content) content.style.backgroundColor = w.backgroundColor;
         }
     };
-    const grid = GridStack.init();
+    const gridOptions = {
+        float: true,
+        minRow: 5
+    }
+    const grid = GridStack.init(gridOptions);
     // Save layout on changes
     grid.on('change', saveLayout);
 
