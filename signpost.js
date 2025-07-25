@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     clearBackgroundBtn.addEventListener('click', () => {
         document.body.style.backgroundImage = '';
+        backgroundImageInput.value = ''; // ← clears the input field
         chrome.storage.local.remove('desktopBackgroundImage');
     });
     resetSettingsBtn.addEventListener('click', () => {
