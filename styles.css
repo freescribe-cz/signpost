@@ -140,8 +140,6 @@ button:hover {
    margin-top: 0;
 }
 
-#settings-panel label {}
-
 #settings-panel button {
    width: 90%;
 }
@@ -231,12 +229,14 @@ button:hover {
 .tile-menu-icon {
    display: none;
    background-color: rgba(0, 0, 0, 0.15);
+   color: black !important;
    padding: 5px;
    border-radius: 3px;
    cursor: pointer;
    user-select: none;
    font-weight: bold;
    position: relative;
+   pointer-events: auto;
 }
 
 .grid-stack-item-content:hover .tile-menu-icon {

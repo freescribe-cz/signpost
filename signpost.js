@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const content = el.querySelector('.tile');
             if (content) content.style.backgroundColor = w.backgroundColor;
         }
+        if (w.textColor) {
+            const content = el.querySelector('.tile');
+            if (content) content.style.color = w.textColor;
+        }
     };
     const gridOptions = {
         float: true,
@@ -148,7 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 w: node.w,
                 h: node.h,
                 id: node.id,
-                backgroundColor: node.backgroundColor || node.el?.querySelector('.tile')?.style.backgroundColor || ''
+                backgroundColor: node.backgroundColor || node.el?.querySelector('.tile')?.style.backgroundColor || '',
+                textColor: node.textColor || node.el?.querySelector('.folder-title')?.style.color || ''
             };
         });
         chrome.storage.sync.set({ tiles: layout });
@@ -315,6 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               `;
         }
+        const textColorItem = !bookmark.url
+            ? `<div class="tile-menu-item set-text-color">Set text color</div>`
+            : '';
         tileHeaderHTML = `
             <div class="tile-header">
                 <div class="folder-title">${tileHeaderTitleText}</div>
@@ -323,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="tile-menu-item remove-tile">Remove</div>
                         <div class="tile-menu-item set-bg-color">Set background color</div>
                         <div class="tile-menu-item reset-bg-color">Reset background</div>
+                        ${textColorItem}
                     </div>
                 </div>
             </div>
@@ -341,23 +350,30 @@ document.addEventListener('DOMContentLoaded', () => {
             x: pos.x, y: pos.y, w: pos.w, h: pos.h,
             content: tileHTML,
             id: `${bookmark.id}`,
-            backgroundColor: pos?.backgroundColor || ''
+            backgroundColor: pos?.backgroundColor || '',
+            textColor: pos?.textColor || ''
         });
         console.log("Widget added, ID: ", bookmark.id);
 
-        if (pos?.backgroundColor) {
-            requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (pos?.backgroundColor) {
+
                 const content = widget.el?.querySelector('.tile');
                 if (content) content.style.backgroundColor = pos.backgroundColor;
-            });
-        }
 
-        addWidgetListeners();
+            }
+            if (!bookmark.url && pos?.textColor) {
+                const title = widget.el?.querySelector('.folder-title');
+                if (title) title.style.color = pos.textColor;
+            }
+        });
+
+        addWidgetListeners(!bookmark.url);
 
         saveLayout(); // Save every time a new tile is added
     }
 
-    function addWidgetListeners() {
+    function addWidgetListeners(isFolder) {
         const tileEl = grid.engine.nodes[grid.engine.nodes.length - 1].el;
 
         // Toggle menu on icon click
@@ -424,7 +440,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 delete node.backgroundColor;
             }
             saveLayout();
+            tileEl.querySelector('.tile-menu')?.classList.add('hidden');
         });
+
+        if (isFolder) {
+            // Set text color
+            tileEl.querySelector('.set-text-color')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openColorPicker((color) => {
+                    const title = tileEl.querySelector('.folder-title');
+                    if (title) {
+                        title.style.color = color;
+                    }
+                    const node = grid.engine.nodes.find(n => n.el === tileEl);
+                    if (node) node.textColor = color;
+                    saveLayout();
+                });
+            });
+        }
 
         // Add click listeners to child folders
         tileEl.querySelectorAll('.bookmark-folder').forEach(folderEl => {
