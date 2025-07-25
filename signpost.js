@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="tile-body center">
                 <a class="bookmark-link" href="${bookmark.url}" target="${openTarget}">
                     <img class="favicon-large" src="${faviconURL}"/>
-                    <p>${bookmark.title}</p>
+                    <div class="bookmark-title">${bookmark.title}</div>
                 </a>
               </div>
               `;

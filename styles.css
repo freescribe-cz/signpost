@@ -190,6 +190,9 @@ button:hover {
    font-weight: bold;
    margin-bottom: 6px;
    height: 2ex;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
 }
 
 .tile-menu-icon {
@@ -233,6 +236,7 @@ button:hover {
 
 .tile-body {
    flex-grow: 1;
+   flex-direction: column;
    display: flex;
    overflow: auto;
 }
@@ -257,6 +261,13 @@ button:hover {
    overflow: hidden;
    text-overflow: ellipsis;
    cursor: pointer;
+}
+
+.bookmark-title {
+   overflow: hidden;
+   line-height: 1.3em;
+   display: block;
+   height: 100%;
 }
 
 .favicon-large {
