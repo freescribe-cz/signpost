@@ -109,7 +109,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return ul;
     }
 
-    function addTileToGrid(bookmark, pos = { x: 0, y: 0, w: 1, h: 1 }) {
+    function addTileToGrid(bookmark, pos) {
+        // Calculate position for new widgets
+        if (!pos) {
+            const w = 1, h = 1;
+            const gridWidth = grid.getColumn();
+            let x = 0, y = 0;
+            let found = false;
+
+            outer: for (y = 0; y < 100; y++) { // max 100 rows
+                for (x = 0; x <= gridWidth - w; x++) {
+                    const collision = grid.engine.nodes.some(n =>
+                        x < n.x + n.w &&
+                        x + w > n.x &&
+                        y < n.y + n.h &&
+                        y + h > n.y
+                    );
+                    if (!collision) {
+                        found = true;
+                        break outer;
+                    }
+                }
+            }
+            pos = { x, y, w, h };
+        }
+
         let tileHeaderHTML;
         let tileBodyHTML;
         let tileFooterHTML;
@@ -212,7 +236,27 @@ document.addEventListener('DOMContentLoaded', () => {
             folderEl.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const folderId = folderEl.getAttribute('data-id');
-                const widgetPos = { x: 0, y: 0, w: 1, h: 1 }
+                const node = grid.engine.nodes.find(n => n.el === tileEl);
+                let x = 0, y = 0;
+                if (node) {
+                    const gridWidth = grid.getColumn();
+                    const proposedX = node.x + node.w;
+                    const sameRowWidgets = grid.engine.nodes.filter(n =>
+                        n.y < node.y + node.h && n.y + n.h > node.y
+                    );
+                    const overlapRight = sameRowWidgets.some(n =>
+                        n.x < proposedX + 1 && n.x + n.w > proposedX
+                    );
+
+                    if (proposedX + 1 <= gridWidth && !overlapRight) {
+                        x = proposedX;
+                        y = node.y;
+                    } else {
+                        x = node.x;
+                        y = node.y + node.h;
+                    }
+                }
+                const widgetPos = { x, y, w: 1, h: 1 };
                 chrome.bookmarks.getSubTree(folderId, (results) => {
                     if (results && results[0]) {
                         addTileToGrid(results[0], widgetPos);
