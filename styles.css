@@ -160,7 +160,8 @@ button:hover {
 
 /* Tiles */
 .grid-stack-item-content {
-   overflow: auto;
+   background-color: rgba(255, 255, 255, 0.6);
+   overflow: visible !important;
    word-wrap: break-word;
    border-radius: 6px;
    display: flex;
@@ -171,13 +172,14 @@ button:hover {
 
 .tile {
    padding: 8px;
-   overflow: auto;
+   overflow: visible;
    word-wrap: break-word;
    border-radius: 6px;
    display: flex;
    flex-direction: column;
    box-sizing: border-box;
    height: 100%;
+   position: relative;
 }
 
 .tile-header,
@@ -212,6 +214,7 @@ button:hover {
    cursor: pointer;
    user-select: none;
    font-weight: bold;
+   position: relative;
 }
 
 .grid-stack-item-content:hover .tile-menu-icon {
@@ -220,17 +223,23 @@ button:hover {
 
 .tile-menu {
    position: absolute;
-   right: 8px;
-   top: 28px;
+   top: 0;
+   left: 100%;
+   margin-left: 8px;
+   width: 160px;
+   z-index: 10;
    background: white;
    border: 1px solid #ccc;
    border-radius: 4px;
-   z-index: 10;
    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+   font-weight: normal;
 }
 
-.tile-menu.hidden {
-   display: none;
+.tile-menu.flip-left {
+   left: auto;
+   right: 100%;
+   margin-left: 0;
+   margin-right: 8px;
 }
 
 .tile-menu-item {

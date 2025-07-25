@@ -318,9 +318,11 @@ document.addEventListener('DOMContentLoaded', () => {
         tileHeaderHTML = `
             <div class="tile-header">
                 <div class="folder-title">${tileHeaderTitleText}</div>
-                <div class="tile-menu-icon">⁝</div>
-                <div class="tile-menu hidden">
-                  <div class="tile-menu-item remove-tile">Remove</div><div class="tile-menu-item set-bg-color">Set background color</div>
+                <div class="tile-menu-icon">⁝
+                    <div class="tile-menu hidden">
+                        <div class="tile-menu-item remove-tile">Remove</div>
+                        <div class="tile-menu-item set-bg-color">Set background color</div>
+                    </div>
                 </div>
             </div>
             `;
@@ -358,10 +360,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const tileEl = grid.engine.nodes[grid.engine.nodes.length - 1].el;
 
         // Toggle menu on icon click
-        tileEl.querySelector('.tile-menu-icon')?.addEventListener('click', (e) => {
+        const icon = tileEl.querySelector('.tile-menu-icon');
+        const menu = tileEl.querySelector('.tile-menu');
+
+        icon?.addEventListener('click', (e) => {
             e.stopPropagation();
-            const menu = tileEl.querySelector('.tile-menu');
-            menu.classList.toggle('hidden');
+            if (menu) {
+                menu.classList.toggle('hidden');
+
+                if (!menu.classList.contains('hidden')) {
+                    // Position menu relative to icon
+                    const iconRect = icon.getBoundingClientRect();
+                    const menuRect = menu.getBoundingClientRect();
+                    const overflowRight = iconRect.left + menuRect.width > window.innerWidth;
+
+                    menu.classList.remove('flip-left');
+                    if (overflowRight) {
+                        menu.classList.add('flip-left');
+                    }
+
+                    // Close on outside click
+                    document.addEventListener('click', function outsideClick(ev) {
+                        if (!menu.contains(ev.target) && ev.target !== icon) {
+                            menu.classList.add('hidden');
+                            document.removeEventListener('click', outsideClick);
+                        }
+                    });
+                }
+            }
         });
 
         // Remove widget on menu click
