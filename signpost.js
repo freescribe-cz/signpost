@@ -55,6 +55,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function showBubbleMessage(text, duration = 2000) {
+        const bubble = document.getElementById('bubble-message');
+        bubble.textContent = text;
+        bubble.classList.remove('hidden');
+        setTimeout(() => {
+            bubble.classList.add('hidden');
+        }, duration);
+    }
+
     function createTree(nodes) {
         const ul = document.createElement('ul');
 
@@ -110,6 +119,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addTileToGrid(bookmark, pos) {
+        // Check the widget isn't in the grid yet
+        const existingNode = grid.engine.nodes.find(n => n.id === `${bookmark.id}`);
+        if (existingNode) {
+            showBubbleMessage("Widget already present!");
+            const tileEl = existingNode.el;
+            if (tileEl) {
+                tileEl.classList.add('widget-flash');
+                tileEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => tileEl.classList.remove('widget-flash'), 1000);
+            }
+
+            return;
+        }
+
         // Calculate position for new widgets
         if (!pos) {
             const w = 1, h = 1;

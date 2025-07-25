@@ -14,6 +14,36 @@ body {
    justify-content: center;
 }
 
+#bubble-message {
+   position: fixed;
+   top: 20px;
+   left: 50%;
+   transform: translateX(-50%);
+   background: orange;
+   color: white;
+   padding: 10px 20px;
+   border-radius: 6px;
+   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+   z-index: 2000;
+   font-weight: bold;
+   opacity: 0.9;
+   transition: opacity 0.5s ease;
+}
+
+.widget-flash {
+   animation: flash-bg 1s ease-out;
+}
+
+@keyframes flash-bg {
+   0% {
+      background-color: orange;
+   }
+
+   100% {
+      background-color: rgba(255, 255, 255, 0.8);
+   }
+}
+
 .grid-stack-item-content {
    border: solid 1px darkgray;
    border-radius: 4px;
