@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-        console.log("Tiles loaded: ", tiles.length, tiles);
     });
 
     const defaultSettings = {
@@ -157,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
         chrome.storage.sync.set({ tiles: layout });
-        console.log("Saving layout:", layout.length, layout);
     }
 
     function loadBookmarks() {
@@ -343,9 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-
-        console.log("Widget bg: ", pos?.backgroundColor);
-
         const widget = grid.addWidget({
             x: pos.x, y: pos.y, w: pos.w, h: pos.h,
             content: tileHTML,
@@ -353,7 +348,6 @@ document.addEventListener('DOMContentLoaded', () => {
             backgroundColor: pos?.backgroundColor || '',
             textColor: pos?.textColor || ''
         });
-        console.log("Widget added, ID: ", bookmark.id);
 
         requestAnimationFrame(() => {
             if (pos?.backgroundColor) {
