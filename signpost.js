@@ -322,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="tile-menu hidden">
                         <div class="tile-menu-item remove-tile">Remove</div>
                         <div class="tile-menu-item set-bg-color">Set background color</div>
+                        <div class="tile-menu-item reset-bg-color">Reset background</div>
                     </div>
                 </div>
             </div>
@@ -410,6 +411,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 saveLayout();
             });
+        });
+        // Reset background color
+        tileEl.querySelector('.reset-bg-color')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const content = tileEl.querySelector('.tile');
+            if (content) {
+                content.style.backgroundColor = '';
+            }
+            const node = grid.engine.nodes.find(n => n.el === tileEl);
+            if (node) {
+                delete node.backgroundColor;
+            }
+            saveLayout();
         });
 
         // Add click listeners to child folders
