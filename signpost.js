@@ -19,16 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Tiles loaded: ", tiles.length, tiles);
     });
 
-    let globalSettings = {
+    const defaultSettings = {
         openInNewTab: false,
         confirmBeforeRemove: false,
         tileSize: 140,
         desktopBackgroundColor: '#ffffff',
         desktopBackgroundImage: null
     };
+
+    let globalSettings = { ...defaultSettings };
+
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
     const backgroundColorInput = document.getElementById('setting-background-color');
+    const backgroundImageInput = document.getElementById('setting-background-image');
+    const clearBackgroundBtn = document.getElementById('clear-background');
+    const resetSettingsBtn = document.getElementById('reset-settings');
 
     // Load and apply settings
     chrome.storage.sync.get(['globalSettings'], (data) => {
@@ -38,6 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
     });
+    chrome.storage.local.get('desktopBackgroundImage', (data) => {
+        if (data.desktopBackgroundImage) {
+            document.body.style.backgroundImage = `url(${data.desktopBackgroundImage})`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+        }
+    });
+
     // Save updated settings on change
     openInNewTabCheckbox.addEventListener('change', () => {
         globalSettings.openInNewTab = openInNewTabCheckbox.checked;
@@ -50,6 +64,40 @@ document.addEventListener('DOMContentLoaded', () => {
     backgroundColorInput.addEventListener('input', () => {
         globalSettings.desktopBackgroundColor = backgroundColorInput.value;
         document.body.style.backgroundColor = backgroundColorInput.value;
+        chrome.storage.sync.set({ globalSettings });
+    });
+    backgroundImageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || file.size > 2.5 * 1024 * 1024) {
+            alert("Image too large (max 2.5 MB)");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+            const desktopBackgroundImage = reader.result;
+            document.body.style.backgroundImage = `url(${desktopBackgroundImage})`;
+            document.body.style.backgroundSize = 'cover';
+            document.body.style.backgroundPosition = 'center';
+            chrome.storage.local.set({ desktopBackgroundImage: desktopBackgroundImage });
+        };
+        reader.readAsDataURL(file);
+    });
+    clearBackgroundBtn.addEventListener('click', () => {
+        document.body.style.backgroundImage = '';
+        chrome.storage.local.remove('desktopBackgroundImage');
+    });
+    resetSettingsBtn.addEventListener('click', () => {
+        Object.assign(globalSettings, defaultSettings);
+        // Apply UI changes
+        openInNewTabCheckbox.checked = globalSettings.openInNewTab;
+        confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
+        backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        backgroundImageInput.value = '';
+        document.body.style.backgroundImage = '';
+        // Clear local image
+        chrome.storage.local.remove('desktopBackgroundImage');
+        // Save new defaults
         chrome.storage.sync.set({ globalSettings });
     });
 
