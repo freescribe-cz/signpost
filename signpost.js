@@ -19,6 +19,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Tiles loaded: ", tiles.length, tiles);
     });
 
+    let globalSettings = {
+        openInNewTab: false,
+        confirmBeforeRemove: false,
+        tileSize: 140,
+        desktopBackgroundColor: '#ffffff',
+        desktopBackgroundImage: null
+    };
+    const openInNewTabCheckbox = document.getElementById('setting-new-tab');
+
+    // Load and apply settings
+    chrome.storage.sync.get(['globalSettings'], (data) => {
+        Object.assign(globalSettings, data.globalSettings || {});
+        openInNewTabCheckbox.checked = globalSettings.openInNewTab;
+    });
+    // Save updated settings on change
+    openInNewTabCheckbox.addEventListener('change', () => {
+        globalSettings.openInNewTab = openInNewTabCheckbox.checked;
+        chrome.storage.sync.set({ globalSettings });
+    });
+
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');
     const modalAdd = document.getElementById('bookmark-picker');
@@ -164,10 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
             pos = { x, y, w, h };
         }
 
+        // Compose tile HTML content
         let tileHeaderHTML;
         let tileBodyHTML;
         let tileFooterHTML;
         let tileHeaderTitleText;
+        const openTarget = globalSettings.openInNewTab ? '_blank' : '_self';
 
         if (!bookmark.url) { // FOLDERS
             let childListHTML = '';
@@ -178,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Bookmark link
                     const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${new URL(child.url).hostname}`;
                     contentHTML = `
-    <a class="bookmark-link" href="${child.url}" title="${child.title}">
+    <a class="bookmark-link" href="${child.url}" title="${child.title}" target="${openTarget}">
         <img class="favicon" src="${faviconURL}"/>
     </a>
     `;
@@ -205,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">
-                <a class="bookmark-link" href="${bookmark.url}">
+                <a class="bookmark-link" href="${bookmark.url}" target="${openTarget}">
                     <img class="favicon-large" src="${faviconURL}"/>
                     <p>${bookmark.title}</p>
                 </a>
