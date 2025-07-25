@@ -28,12 +28,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
+    const backgroundColorInput = document.getElementById('setting-background-color');
 
     // Load and apply settings
     chrome.storage.sync.get(['globalSettings'], (data) => {
         Object.assign(globalSettings, data.globalSettings || {});
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
+        backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
     });
     // Save updated settings on change
     openInNewTabCheckbox.addEventListener('change', () => {
@@ -42,6 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     confirmBeforeRemoveCheckbox.addEventListener('change', () => {
         globalSettings.confirmBeforeRemove = confirmBeforeRemoveCheckbox.checked;
+        chrome.storage.sync.set({ globalSettings });
+    });
+    backgroundColorInput.addEventListener('input', () => {
+        globalSettings.desktopBackgroundColor = backgroundColorInput.value;
+        document.body.style.backgroundColor = backgroundColorInput.value;
         chrome.storage.sync.set({ globalSettings });
     });
 
