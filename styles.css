@@ -10,7 +10,7 @@ br {
 }
 
 .hidden {
-   display: none;
+   display: none !important;
 }
 
 .center {
@@ -244,6 +244,7 @@ button:hover {
 }
 
 .tile-menu {
+   display: block;
    position: absolute;
    top: 0;
    left: 100%;

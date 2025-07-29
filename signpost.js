@@ -362,14 +362,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        addWidgetListeners(!bookmark.url);
+        addWidgetListeners(!bookmark.url, widget);
 
         saveLayout(); // Save every time a new tile is added
     }
 
-    function addWidgetListeners(isFolder) {
-        const tileEl = grid.engine.nodes[grid.engine.nodes.length - 1].el;
-
+    function addWidgetListeners(isFolder, tileEl) {
         // Toggle menu on icon click
         const icon = tileEl.querySelector('.tile-menu-icon');
         const menu = tileEl.querySelector('.tile-menu');
