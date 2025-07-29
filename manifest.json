@@ -1,7 +1,7 @@
 {
   "name": "Signpost: Visual Bookmarks for New Tab",
   "description": "Organize your Chrome bookmarks on a visual desktop grid for quick access",
-  "version": "1.0",
+  "version": "1.1",
   "manifest_version": 3,
   "chrome_url_overrides": {
     "newtab": "signpost.html"
