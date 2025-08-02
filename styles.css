@@ -213,14 +213,14 @@ button:hover {
    align-items: center;
    margin-bottom: 6px;
    position: relative;
-   height: 2ex;
+   height: 2.5ex;
 }
 
 .folder-title {
    background: none;
    font-weight: bold;
    margin-bottom: 6px;
-   height: 2ex;
+   height: 2.5ex;
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;
