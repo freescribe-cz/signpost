@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const defaultSettings = {
         openInNewTab: false,
         confirmBeforeRemove: false,
-        tileSize: 140,
+        itemSize: 122,
         desktopBackgroundColor: '#ffffff',
         desktopBackgroundImage: null
     };
@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
+    const itemSizeInput = document.getElementById('setting-item-size');
     const backgroundColorInput = document.getElementById('setting-background-color');
     const backgroundImageInput = document.getElementById('setting-background-image');
     const clearBackgroundBtn = document.getElementById('clear-background');
@@ -52,6 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.assign(globalSettings, data.globalSettings || {});
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
+        itemSizeInput.value = globalSettings.itemSize;
+        grid.cellHeight(globalSettings.itemSize);
+        document.querySelector('.grid-stack').style.gridAutoRows = `${globalSettings.itemSize}px`;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
     });
@@ -67,6 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
     openInNewTabCheckbox.addEventListener('change', () => {
         globalSettings.openInNewTab = openInNewTabCheckbox.checked;
         chrome.storage.sync.set({ globalSettings });
+    });
+    itemSizeInput.addEventListener('change', () => {
+        const newSize = parseInt(itemSizeInput.value);
+        if (!isNaN(newSize) && newSize >= 40 && newSize <= 300) {
+            globalSettings.itemSize = newSize;
+            chrome.storage.sync.set({ globalSettings });
+            grid.cellHeight(newSize);
+            document.querySelector('.grid-stack').style.gridAutoRows = `${newSize}px`; // fallback
+        }
     });
     confirmBeforeRemoveCheckbox.addEventListener('change', () => {
         globalSettings.confirmBeforeRemove = confirmBeforeRemoveCheckbox.checked;
@@ -103,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply UI changes
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
+        itemSizeInput.value = globalSettings.itemSize;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
         backgroundImageInput.value = '';
