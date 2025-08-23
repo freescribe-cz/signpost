@@ -1,4 +1,26 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    // One-time migration: copy known keys from sync -> local
+    function migrateSyncToLocalOnce() {
+        chrome.storage.local.get('migratedToLocal', (res) => {
+            if (res.migratedToLocal) {
+                console.log("Already migrated to local storage.");
+                return;
+            }
+
+            chrome.storage.sync.get(['tiles', 'setupComplete', 'globalSettings'], (syncData) => {
+                const toWrite = {};
+                if (Array.isArray(syncData.tiles) && syncData.tiles.length) toWrite.tiles = syncData.tiles;
+                if (typeof syncData.setupComplete === 'boolean') toWrite.setupComplete = syncData.setupComplete;
+                if (syncData.globalSettings) toWrite.globalSettings = syncData.globalSettings;
+
+                chrome.storage.local.set({ ...toWrite, migratedToLocal: true });
+                console.log("Migrated to local storage.");
+            });
+        });
+    }
+    migrateSyncToLocalOnce();
+
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content;
@@ -19,25 +41,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save layout on changes
     grid.on('change', saveLayout);
 
-    // Load layout on startup + show first-run setup if empty
-    chrome.storage.sync.get({ tiles: [], setupComplete: false }, ({ tiles, setupComplete }) => {
-        if (tiles.length > 0) {
-            tiles.forEach(tile => {
-                chrome.bookmarks.getSubTree(tile.id, (results) => {
-                    if (results && results[0]) {
-                        addTileToGrid(results[0], tile); // uses stored x/y/w/h
-                    }
-                });
+    // Load layout on startup from LOCAL, show first-run setup if empty
+    // (fallback to sync this boot only if local is empty)
+    chrome.storage.local.get({ tiles: [], setupComplete: false }, (loc) => {
+        let { tiles, setupComplete } = loc;
+
+        if ((!tiles || tiles.length === 0) && setupComplete === true) {
+            // fallback: try sync once
+            chrome.storage.sync.get({ tiles: [] }, (syncData) => {
+                if (Array.isArray(syncData.tiles) && syncData.tiles.length) {
+                    tiles = syncData.tiles;
+                    chrome.storage.local.set({ tiles });
+                    renderTiles(tiles);
+                } else {
+                    handleEmpty(setupComplete);
+                }
             });
-        } else if (!setupComplete) {
-            openModal(document.getElementById('setup-prompt'));
+        } else if (tiles && tiles.length > 0) {
+            renderTiles(tiles);
+        } else {
+            handleEmpty(setupComplete);
         }
     });
+
+    function renderTiles(tiles) {
+        tiles.forEach(tile => {
+            chrome.bookmarks.getSubTree(String(tile.id), (results) => {
+                if (results && results[0]) addTileToGrid(results[0], tile);
+            });
+        });
+    }
 
     // --- Initial Setup Modal ---
     const setupModal = document.getElementById('setup-prompt');
     const btnLoadFromBar = document.getElementById('load-bookmarks');
     const btnStartEmpty = document.getElementById('start-empty');
+
+    function handleEmpty(setupComplete) {
+        if (!setupComplete) {
+            openModal(setupModal);
+        } else {
+            // reset flag if user somehow has setupComplete but no tiles
+            chrome.storage.local.set({ setupComplete: false });
+            openModal(setupModal);
+        }
+    }
 
     btnLoadFromBar?.addEventListener('click', async () => {
         // Import top-level items from the Bookmarks Bar
@@ -58,14 +106,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (grid.batchUpdate) grid.batchUpdate(false);
 
             saveLayout();
-            chrome.storage.sync.set({ setupComplete: true });
+            chrome.storage.local.set({ setupComplete: true });
             closeModal(setupModal);
             showBubbleMessage('Imported from Bookmarks Bar');
         });
     });
 
     btnStartEmpty?.addEventListener('click', () => {
-        chrome.storage.sync.set({ setupComplete: true });
+        chrome.storage.local.set({ setupComplete: true });
         closeModal(setupModal);
         showBubbleMessage('Start with an empty grid');
     });
@@ -88,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetSettingsBtn = document.getElementById('reset-settings');
 
     // Load and apply settings
-    chrome.storage.sync.get(['globalSettings'], (data) => {
+    chrome.storage.local.get('globalSettings', (data) => {
         Object.assign(globalSettings, data.globalSettings || {});
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
@@ -106,16 +154,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save updated settings on change
     openInNewTabCheckbox.addEventListener('change', () => {
         globalSettings.openInNewTab = openInNewTabCheckbox.checked;
-        chrome.storage.sync.set({ globalSettings });
+        chrome.storage.local.set({ globalSettings });
     });
     confirmBeforeRemoveCheckbox.addEventListener('change', () => {
         globalSettings.confirmBeforeRemove = confirmBeforeRemoveCheckbox.checked;
-        chrome.storage.sync.set({ globalSettings });
+        chrome.storage.local.set({ globalSettings });
     });
     backgroundColorInput.addEventListener('input', () => {
         globalSettings.desktopBackgroundColor = backgroundColorInput.value;
         document.body.style.backgroundColor = backgroundColorInput.value;
-        chrome.storage.sync.set({ globalSettings });
+        chrome.storage.local.set({ globalSettings });
     });
     backgroundImageInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -150,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear local image
         chrome.storage.local.remove('desktopBackgroundImage');
         // Save new defaults
-        chrome.storage.sync.set({ globalSettings });
+        chrome.storage.local.set({ globalSettings });
     });
 
     // Set up buttons and modals
@@ -218,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 textColor: node.textColor || node.el?.querySelector('.folder-title')?.style.color || ''
             };
         });
-        chrome.storage.sync.set({ tiles: layout });
+        chrome.storage.local.set({ tiles: layout });
     }
 
     function loadBookmarks() {
