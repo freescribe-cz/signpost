@@ -19,15 +19,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save layout on changes
     grid.on('change', saveLayout);
 
-    // Load layout on startup
-    chrome.storage.sync.get({ tiles: [] }, ({ tiles }) => {
-        tiles.forEach(tile => {
-            chrome.bookmarks.getSubTree(tile.id, (results) => {
-                if (results && results[0]) {
-                    addTileToGrid(results[0], tile); // uses stored x/y/w/h
-                }
+    // Load layout on startup + show first-run setup if empty
+    chrome.storage.sync.get({ tiles: [], setupComplete: false }, ({ tiles, setupComplete }) => {
+        if (tiles.length > 0) {
+            tiles.forEach(tile => {
+                chrome.bookmarks.getSubTree(tile.id, (results) => {
+                    if (results && results[0]) {
+                        addTileToGrid(results[0], tile); // uses stored x/y/w/h
+                    }
+                });
             });
+        } else if (!setupComplete) {
+            openModal(document.getElementById('setup-prompt'));
+        }
+    });
+
+    // --- Initial Setup Modal ---
+    const setupModal = document.getElementById('setup-prompt');
+    const btnLoadFromBar = document.getElementById('load-bookmarks');
+    const btnStartEmpty = document.getElementById('start-empty');
+
+    btnLoadFromBar?.addEventListener('click', async () => {
+        // Import top-level items from the Bookmarks Bar
+        chrome.bookmarks.getSubTree('1', (results) => {
+            const bar = results && results[0];
+            if (!bar) {
+                alert('Could not access Bookmarks Bar.');
+                return;
+            }
+            const children = bar.children || [];
+            if (!children.length) {
+                showBubbleMessage('Bookmarks Bar is empty');
+            }
+
+            // Batch add for smoother GridStack updates
+            if (grid.batchUpdate) grid.batchUpdate();
+            children.forEach(child => addTileToGrid(child));
+            if (grid.batchUpdate) grid.batchUpdate(false);
+
+            saveLayout();
+            chrome.storage.sync.set({ setupComplete: true });
+            closeModal(setupModal);
+            showBubbleMessage('Imported from Bookmarks Bar');
         });
+    });
+
+    btnStartEmpty?.addEventListener('click', () => {
+        chrome.storage.sync.set({ setupComplete: true });
+        closeModal(setupModal);
+        showBubbleMessage('Start with an empty grid');
     });
 
     const defaultSettings = {
@@ -120,27 +160,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalSet = document.getElementById('settings-panel');
 
     btnAdd.addEventListener('click', () => {
-        modalAdd.classList.toggle('hidden');
-        if (modalSet) modalSet.classList.add('hidden');
-        loadBookmarks();
+        if (!modalAdd) return;
+        const isVisible = !modalAdd.classList.contains('hidden');
+        if (isVisible) {
+            closeModal(modalAdd);
+        } else {
+            closeModal(modalSet);
+            openModal(modalAdd);
+            loadBookmarks();
+        }
     });
 
     btnSettings.addEventListener('click', () => {
         if (!modalSet) return;
-        const isVisible = modalSet.classList.contains('visible');
-        modalSet.classList.toggle('visible', !isVisible);
-        modalSet.classList.toggle('hidden', isVisible);
-        modalAdd.classList.add('hidden');
+        const isVisible = !modalSet.classList.contains('hidden');
+        if (isVisible) {
+            closeModal(modalSet);
+        } else {
+            closeModal(modalAdd);
+            openModal(modalSet);
+        }
     });
 
     document.querySelectorAll('.modal .btn-close').forEach(btn =>
-        btn.addEventListener('click', () => btn.closest('.modal').classList.add('hidden'))
+        btn.addEventListener('click', () => closeModal(btn.closest('.modal')))
     );
 
     document.querySelector('#settings-panel .btn-close')?.addEventListener('click', () => {
         modalSet.classList.remove('visible');
-        modalSet.classList.add('hidden');
+        closeModal(modalSet);
     });
+
+    function openModal(modal) {
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeModal(modal) {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        if (document.querySelectorAll('.modal:not(.hidden)').length === 0) {
+            document.body.classList.remove('modal-open');
+        }
+    }
 
     // Saving layout
     function saveLayout() {
@@ -205,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 folderSpan.addEventListener('click', (e) => {
                     e.stopPropagation();
                     addTileToGrid(node);
-                    document.getElementById('bookmark-picker').classList.add('hidden');
+                    closeModal(modalAdd);
                 });
 
                 li.appendChild(expandBtn);
@@ -219,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.addEventListener('click', (e) => {
                     e.stopPropagation();
                     addTileToGrid(node);
-                    document.getElementById('bookmark-picker').classList.add('hidden');
+                    closeModal(modalAdd);
                 });
             }
 

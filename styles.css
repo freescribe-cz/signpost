@@ -58,6 +58,15 @@ br {
    border-radius: 4px;
 }
 
+/* Backdrop when any modal is visible */
+body.modal-open::before {
+   content: "";
+   position: fixed;
+   inset: 0;
+   background: rgba(0, 0, 0, 0.25);
+   z-index: 1000;
+}
+
 .modal {
    position: fixed;
    top: 50%;
