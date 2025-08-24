@@ -34,7 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     const gridOptions = {
+        cellHeight: 'initial',
+        column: 18,
         float: true,
+        margin: 6,
         minRow: 5
     }
     const grid = GridStack.init(gridOptions);
@@ -357,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate position for new widgets
         if (!pos) {
-            const w = 1, h = 1;
+            const w = 2, h = 2;
             const gridWidth = grid.getColumn();
             let x = 0, y = 0;
             let found = false;
@@ -422,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">
-                <a class="bookmark-link" href="${bookmark.url}" target="${openTarget}">
+                <a class="bookmark-link" href="${bookmark.url}" title="${bookmark.title}" target="${openTarget}">
                     <img class="favicon-large" src="${faviconURL}"/>
                     <div class="bookmark-title">${bookmark.title}</div>
                 </a>
