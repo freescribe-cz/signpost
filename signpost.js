@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     const gridOptions = {
-        cellHeight: 'initial',
         column: 18,
         float: true,
         margin: 6,
