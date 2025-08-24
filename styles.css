@@ -53,11 +53,6 @@ br {
    }
 }
 
-.grid-stack-item-content {
-   border: solid 1px darkgray;
-   border-radius: 4px;
-}
-
 /* Backdrop when any modal is visible */
 body.modal-open::before {
    content: "";
@@ -191,6 +186,8 @@ button:hover {
 
 /* Tiles */
 .grid-stack-item-content {
+   border: solid 1px rgba(0, 0, 0, 0.15);
+   border-radius: 4px;
    background-color: rgba(255, 255, 255, 0.5);
    overflow: visible !important;
    word-wrap: break-word;
@@ -199,6 +196,7 @@ button:hover {
    flex-direction: column;
    box-sizing: border-box;
    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+   padding: 0;
 }
 
 .tile {
@@ -297,7 +295,13 @@ button:hover {
    flex-grow: 1;
    flex-direction: column;
    display: flex;
-   overflow: auto;
+   overflow-y: auto;
+   overflow-x: hidden;
+   text-overflow: ellipsis;
+}
+
+.tile-body.center {
+   margin-top: -8px;
 }
 
 .folder-content {
@@ -324,6 +328,7 @@ button:hover {
 
 .bookmark-title {
    overflow: hidden;
+   text-overflow: ellipsis;
    line-height: 1.3em;
    display: block;
    height: 100%;
