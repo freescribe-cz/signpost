@@ -255,6 +255,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }, duration);
     }
 
+    function getFavicon(url, size = 32) {
+        const u = new URL(chrome.runtime.getURL('/_favicon/'));
+        u.searchParams.set('pageUrl', url);
+        u.searchParams.set('size', String(size));
+        return u.toString();
+    }
+
     function createTree(nodes) {
         const ul = document.createElement('ul');
 
@@ -292,7 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 li.appendChild(folderSpan);
                 li.appendChild(childUl);
             } else {
-                const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${new URL(node.url).hostname}`;
+                const faviconURL = getFavicon(node.url, 16);
+
                 li.innerHTML = `<img class="favicon-tree" src="${faviconURL}"/> ${node.title}`;
                 li.style.cursor = 'pointer';
 
@@ -362,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let contentHTML = '';
                 if (child.url) {
                     // Bookmark link
-                    const faviconURL = `https://www.google.com/s2/favicons?sz=16&domain=${new URL(child.url).hostname}`;
+                    const faviconURL = getFavicon(child.url, 16);
                     contentHTML = `
     <a class="bookmark-link" href="${child.url}" title="${child.title}" target="${openTarget}">
         <img class="favicon" src="${faviconURL}"/>
@@ -387,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               `;
         } else { // LINKS
-            const faviconURL = `https://www.google.com/s2/favicons?sz=32&domain=${new URL(bookmark.url).hostname}`;
+            const faviconURL = getFavicon(bookmark.url, 32);
             tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">
