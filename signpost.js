@@ -1,26 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // One-time migration: copy known keys from sync -> local
-    function migrateSyncToLocalOnce() {
-        chrome.storage.local.get('migratedToLocal', (res) => {
-            if (res.migratedToLocal) {
-                console.log("Already migrated to local storage.");
-                return;
-            }
-
-            chrome.storage.sync.get(['tiles', 'setupComplete', 'globalSettings'], (syncData) => {
-                const toWrite = {};
-                if (Array.isArray(syncData.tiles) && syncData.tiles.length) toWrite.tiles = syncData.tiles;
-                if (typeof syncData.setupComplete === 'boolean') toWrite.setupComplete = syncData.setupComplete;
-                if (syncData.globalSettings) toWrite.globalSettings = syncData.globalSettings;
-
-                chrome.storage.local.set({ ...toWrite, migratedToLocal: true });
-                console.log("Migrated to local storage.");
-            });
-        });
-    }
-    migrateSyncToLocalOnce();
-
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content;
@@ -44,22 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     grid.on('change', saveLayout);
 
     // Load layout on startup from LOCAL, show first-run setup if empty
-    // (fallback to sync this boot only if local is empty)
     chrome.storage.local.get({ tiles: [], setupComplete: false }, (loc) => {
         let { tiles, setupComplete } = loc;
 
-        if ((!tiles || tiles.length === 0) && setupComplete === true) {
-            // fallback: try sync once
-            chrome.storage.sync.get({ tiles: [] }, (syncData) => {
-                if (Array.isArray(syncData.tiles) && syncData.tiles.length) {
-                    tiles = syncData.tiles;
-                    chrome.storage.local.set({ tiles });
-                    renderTiles(tiles);
-                } else {
-                    handleEmpty(setupComplete);
-                }
-            });
-        } else if (tiles && tiles.length > 0) {
+        if (tiles && tiles.length > 0) {
             renderTiles(tiles);
         } else {
             handleEmpty(setupComplete);
