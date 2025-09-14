@@ -359,7 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Compose tile HTML content
         let tileHeaderHTML;
         let tileBodyHTML;
-        let tileFooterHTML;
         let tileHeaderTitleText;
         const openTarget = globalSettings.openInNewTab ? '_blank' : '_self';
 
