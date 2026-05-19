@@ -1,12 +1,61 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    const DEFAULT_TILE_BACKGROUND_COLOR = '#ffffff';
+
+    function getTileAlpha() {
+        return 1 - (Number(globalSettings.tileBackgroundTransparency) || 0) / 100;
+    }
+
+    function colorToRgba(color, alpha) {
+        if (!color) color = DEFAULT_TILE_BACKGROUND_COLOR;
+
+        const hex = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (hex) {
+            let value = hex[1];
+            if (value.length === 3) {
+                value = value.split('').map(char => char + char).join('');
+            }
+            const intValue = parseInt(value, 16);
+            const r = (intValue >> 16) & 255;
+            const g = (intValue >> 8) & 255;
+            const b = intValue & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        const rgb = color.trim().match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+        if (rgb) {
+            return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
+        }
+
+        return color;
+    }
+
+    function applyTileBackground(tileEl, baseColor) {
+        const content = tileEl?.querySelector('.tile');
+        if (!content) return;
+
+        const color = baseColor || DEFAULT_TILE_BACKGROUND_COLOR;
+        content.dataset.baseBackgroundColor = color;
+        content.style.backgroundColor = colorToRgba(color, getTileAlpha());
+    }
+
+    function applyTileTransparencyToAllTiles() {
+        grid.engine.nodes.forEach(node => {
+            const baseColor = node.backgroundColor || node.el?.querySelector('.tile')?.dataset.baseBackgroundColor || DEFAULT_TILE_BACKGROUND_COLOR;
+            applyTileBackground(node.el, baseColor);
+        });
+    }
+
+    function updateTileTransparencyValue() {
+        if (tileTransparencyValue) {
+            tileTransparencyValue.textContent = `${globalSettings.tileBackgroundTransparency}%`;
+        }
+    }
+
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content;
-        if (w.backgroundColor) {
-            const content = el.querySelector('.tile');
-            if (content) content.style.backgroundColor = w.backgroundColor;
-        }
+        applyTileBackground(el, w.backgroundColor);
         if (w.textColor) {
             const content = el.querySelector('.tile');
             if (content) content.style.color = w.textColor;
@@ -92,7 +141,8 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmBeforeRemove: false,
         tileSize: 140,
         desktopBackgroundColor: '#ffffff',
-        desktopBackgroundImage: null
+        desktopBackgroundImage: null,
+        tileBackgroundTransparency: 50
     };
 
     let globalSettings = { ...defaultSettings };
@@ -100,6 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
     const backgroundColorInput = document.getElementById('setting-background-color');
+    const tileTransparencySlider = document.getElementById('setting-tile-transparency');
+    const tileTransparencyValue = document.getElementById('setting-tile-transparency-value');
     const backgroundImageInput = document.getElementById('setting-background-image');
     const clearBackgroundBtn = document.getElementById('clear-background');
     const resetSettingsBtn = document.getElementById('reset-settings');
@@ -110,7 +162,10 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
+        updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        applyTileTransparencyToAllTiles();
     });
     chrome.storage.local.get('desktopBackgroundImage', (data) => {
         if (data.desktopBackgroundImage) {
@@ -132,6 +187,12 @@ document.addEventListener('DOMContentLoaded', () => {
     backgroundColorInput.addEventListener('input', () => {
         globalSettings.desktopBackgroundColor = backgroundColorInput.value;
         document.body.style.backgroundColor = backgroundColorInput.value;
+        chrome.storage.local.set({ globalSettings });
+    });
+    tileTransparencySlider.addEventListener('input', () => {
+        globalSettings.tileBackgroundTransparency = Number(tileTransparencySlider.value);
+        updateTileTransparencyValue();
+        applyTileTransparencyToAllTiles();
         chrome.storage.local.set({ globalSettings });
     });
     backgroundImageInput.addEventListener('change', (e) => {
@@ -161,7 +222,10 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
+        updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        applyTileTransparencyToAllTiles();
         backgroundImageInput.value = '';
         document.body.style.backgroundImage = '';
         // Clear local image
@@ -231,7 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 w: node.w,
                 h: node.h,
                 id: node.id,
-                backgroundColor: node.backgroundColor || node.el?.querySelector('.tile')?.style.backgroundColor || '',
+                backgroundColor: node.backgroundColor || '',
                 textColor: node.textColor || node.el?.querySelector('.folder-title')?.style.color || ''
             };
         });
@@ -437,12 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         requestAnimationFrame(() => {
-            if (pos?.backgroundColor) {
-
-                const content = widget.el?.querySelector('.tile');
-                if (content) content.style.backgroundColor = pos.backgroundColor;
-
-            }
+            applyTileBackground(widget.el, pos?.backgroundColor);
             if (!bookmark.url && pos?.textColor) {
                 const title = widget.el?.querySelector('.folder-title');
                 if (title) title.style.color = pos.textColor;
@@ -499,8 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tileEl.querySelector('.tile-menu')?.classList.add('hidden');
 
             openColorPicker((color) => {
-                const content = tileEl.querySelector('.tile');
-                if (content) content.style.backgroundColor = color;
+                applyTileBackground(tileEl, color);
                 const node = grid.engine.nodes.find(n => n.el === tileEl);
                 if (node) node.backgroundColor = color;
 
@@ -510,10 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset background color
         tileEl.querySelector('.reset-bg-color')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            const content = tileEl.querySelector('.tile');
-            if (content) {
-                content.style.backgroundColor = '';
-            }
+            applyTileBackground(tileEl, DEFAULT_TILE_BACKGROUND_COLOR);
             const node = grid.engine.nodes.find(n => n.el === tileEl);
             if (node) {
                 delete node.backgroundColor;
