@@ -1,7 +1,7 @@
 {
   "name": "Signpost: Visual Bookmarks for New Tab",
   "description": "Visual bookmark dashboard for your new tab. Arrange Chrome bookmarks in a customizable desktop-style grid.",
-  "version": "1.4",
+  "version": "1.5",
   "manifest_version": 3,
   "chrome_url_overrides": {
     "newtab": "signpost.html"

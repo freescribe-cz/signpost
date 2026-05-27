@@ -1,6 +1,68 @@
+const DESKTOP_BACKGROUND_IMAGE_CACHE_KEY = 'signpost.desktopBackgroundImage';
+
+function applyDesktopBackgroundImage(desktopBackgroundImage) {
+    [document.documentElement, document.body].forEach(target => {
+        if (!target) return;
+        target.style.backgroundImage = `url(${desktopBackgroundImage})`;
+        target.style.backgroundSize = 'cover';
+        target.style.backgroundPosition = 'center';
+        target.style.backgroundRepeat = 'no-repeat';
+    });
+}
+
+function clearDesktopBackgroundImage() {
+    [document.documentElement, document.body].forEach(target => {
+        if (!target) return;
+        target.style.backgroundImage = '';
+    });
+}
+
+function cacheDesktopBackgroundImage(desktopBackgroundImage) {
+    try {
+        localStorage.setItem(DESKTOP_BACKGROUND_IMAGE_CACHE_KEY, desktopBackgroundImage);
+    } catch (err) {
+        console.warn('Could not cache desktop background image for fast startup.', err);
+    }
+}
+
+function removeCachedDesktopBackgroundImage() {
+    try {
+        localStorage.removeItem(DESKTOP_BACKGROUND_IMAGE_CACHE_KEY);
+    } catch (err) {
+        console.warn('Could not clear cached desktop background image.', err);
+    }
+}
+
+// Start background loading before DOMContentLoaded so the new tab paints with it sooner.
+(() => {
+    try {
+        const cachedBackgroundImage = localStorage.getItem(DESKTOP_BACKGROUND_IMAGE_CACHE_KEY);
+        if (cachedBackgroundImage) {
+            applyDesktopBackgroundImage(cachedBackgroundImage);
+        }
+    } catch (err) {
+        console.warn('Could not read cached desktop background image.', err);
+    }
+
+    chrome.storage.local.get('desktopBackgroundImage', (data) => {
+        if (!data.desktopBackgroundImage) return;
+        applyDesktopBackgroundImage(data.desktopBackgroundImage);
+        cacheDesktopBackgroundImage(data.desktopBackgroundImage);
+    });
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const DEFAULT_TILE_BACKGROUND_COLOR = '#ffffff';
+
+    try {
+        const cachedBackgroundImage = localStorage.getItem(DESKTOP_BACKGROUND_IMAGE_CACHE_KEY);
+        if (cachedBackgroundImage) {
+            applyDesktopBackgroundImage(cachedBackgroundImage);
+        }
+    } catch (err) {
+        console.warn('Could not read cached desktop background image.', err);
+    }
 
     function getTileAlpha() {
         return 1 - (Number(globalSettings.tileBackgroundTransparency) || 0) / 100;
@@ -167,14 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
         applyTileTransparencyToAllTiles();
     });
-    chrome.storage.local.get('desktopBackgroundImage', (data) => {
-        if (data.desktopBackgroundImage) {
-            document.body.style.backgroundImage = `url(${data.desktopBackgroundImage})`;
-            document.body.style.backgroundSize = 'cover';
-            document.body.style.backgroundPosition = 'center';
-        }
-    });
-
     // Save updated settings on change
     openInNewTabCheckbox.addEventListener('change', () => {
         globalSettings.openInNewTab = openInNewTabCheckbox.checked;
@@ -204,16 +258,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const reader = new FileReader();
         reader.onload = () => {
             const desktopBackgroundImage = reader.result;
-            document.body.style.backgroundImage = `url(${desktopBackgroundImage})`;
-            document.body.style.backgroundSize = 'cover';
-            document.body.style.backgroundPosition = 'center';
+            applyDesktopBackgroundImage(desktopBackgroundImage);
+            cacheDesktopBackgroundImage(desktopBackgroundImage);
             chrome.storage.local.set({ desktopBackgroundImage: desktopBackgroundImage });
         };
         reader.readAsDataURL(file);
     });
     clearBackgroundBtn.addEventListener('click', () => {
-        document.body.style.backgroundImage = '';
+        clearDesktopBackgroundImage();
         backgroundImageInput.value = ''; // ← clears the input field
+        removeCachedDesktopBackgroundImage();
         chrome.storage.local.remove('desktopBackgroundImage');
     });
     resetSettingsBtn.addEventListener('click', () => {
@@ -227,7 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
         applyTileTransparencyToAllTiles();
         backgroundImageInput.value = '';
-        document.body.style.backgroundImage = '';
+        clearDesktopBackgroundImage();
+        removeCachedDesktopBackgroundImage();
         // Clear local image
         chrome.storage.local.remove('desktopBackgroundImage');
         // Save new defaults
