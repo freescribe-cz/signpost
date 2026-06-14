@@ -33,46 +33,75 @@
     </div>
 
     <!-- Settings Panel -->
-    <div id="settings-panel" class="settings modal hidden">
-        <h3>Global settings</h3>
-        <label>
-            <input type="checkbox" id="setting-new-tab" />
-            Open bookmarks in new tab
-        </label>
-        <br>
-        <label>
-            <input type="checkbox" id="setting-confirm-remove" />
-            Confirm before removing bookmark
-        </label>
-        <br>
-        <label>
-            Desktop background color:
-            <input type="color" id="setting-background-color" />
-        </label>
-        <br>
-        <label>
-            Default tile background color:
-            <input type="color" id="setting-default-tile-background-color" />
-        </label>
-        <br>
-        <label class="range-setting">
-            Tile background transparency:
-            <span id="setting-tile-transparency-value">50%</span>
-            <input type="range" id="setting-tile-transparency" min="0" max="100" step="1" />
-        </label>
-        <br>
-        <label>
-            Desktop background image (max 2.5 MB):
-            <input type="file" id="setting-background-image" accept="image/*" />
-        </label>
-        <br>
-        <button id="clear-background">Clear background</button>
-        <br>
-        <button id="reset-settings">Reset to defaults</button>
-        <br>
-        <label>Some changes require page refresh.</label>
-        <br>
-        <button class="btn-close">Close panel</button>
+    <div id="settings-panel" class="settings modal hidden" role="dialog" aria-labelledby="settings-title">
+        <div class="settings-header">
+            <div>
+                <h3 id="settings-title">Settings</h3>
+            </div>
+            <button class="btn-close icon-button" title="Close settings" aria-label="Close settings">×</button>
+        </div>
+
+        <div class="settings-body">
+            <section class="settings-section">
+                <h4>Desktop</h4>
+                <label class="setting-row color-setting">
+                    <span>
+                        <strong>Background color</strong>
+                        <small>Used when no image is set.</small>
+                    </span>
+                    <input type="color" id="setting-background-color" />
+                </label>
+                <label class="setting-row file-setting">
+                    <span>
+                        <strong>Background image</strong>
+                        <small>Choose an image up to 2.5 MB.</small>
+                    </span>
+                    <input type="file" id="setting-background-image" accept="image/*" />
+                </label>
+                <button id="clear-background" class="secondary-action">Clear background</button>
+            </section>
+
+            <section class="settings-section">
+                <h4>Tiles</h4>
+                <label class="setting-row color-setting">
+                    <span>
+                        <strong>Default tile color</strong>
+                        <small>Applied to new and reset tiles.</small>
+                    </span>
+                    <input type="color" id="setting-default-tile-background-color" />
+                </label>
+                <label class="setting-row range-setting">
+                    <span>
+                        <strong>Tile transparency</strong>
+                        <small><span id="setting-tile-transparency-value">50%</span> transparent.</small>
+                    </span>
+                    <input type="range" id="setting-tile-transparency" min="0" max="100" step="1" />
+                </label>
+            </section>
+
+            <section class="settings-section">
+                <h4>Behavior</h4>
+                <label class="setting-row toggle-setting">
+                    <span>
+                        <strong>Open bookmarks in new tab</strong>
+                        <small>Changes apply after refresh.</small>
+                    </span>
+                    <input type="checkbox" id="setting-new-tab" />
+                </label>
+                <label class="setting-row toggle-setting">
+                    <span>
+                        <strong>Confirm before removing a tile</strong>
+                        <small>Adds a confirmation prompt.</small>
+                    </span>
+                    <input type="checkbox" id="setting-confirm-remove" />
+                </label>
+            </section>
+        </div>
+
+        <div class="settings-footer">
+            <button id="reset-settings" class="danger-action">Reset to defaults</button>
+            <button class="btn-close primary-action">Done</button>
+        </div>
     </div>
 
     <!-- Initial Setup Modal -->
