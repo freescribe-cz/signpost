@@ -38,7 +38,8 @@
         <button id="btn-settings" title="Settings" aria-label="Settings">
             <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
-                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.05.05a2.05 2.05 0 0 1-2.9 2.9l-.05-.05a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.02 1.56v.15a2.05 2.05 0 0 1-4.1 0V21a1.7 1.7 0 0 0-1.02-1.56 1.7 1.7 0 0 0-1.88.34l-.05.05a2.05 2.05 0 0 1-2.9-2.9l.05-.05A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.02h-.15a2.05 2.05 0 0 1 0-4.1h.15A1.7 1.7 0 0 0 4.6 8.86a1.7 1.7 0 0 0-.34-1.88l-.05-.05a2.05 2.05 0 0 1 2.9-2.9l.05.05a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10.06 2.86v-.15a2.05 2.05 0 0 1 4.1 0v.15a1.7 1.7 0 0 0 1.02 1.56 1.7 1.7 0 0 0 1.88-.34l.05-.05a2.05 2.05 0 0 1 2.9 2.9l-.05.05a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.02h.15a2.05 2.05 0 0 1 0 4.1h-.15A1.7 1.7 0 0 0 19.4 15Z" />
+                <path
+                    d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.05.05a2.05 2.05 0 0 1-2.9 2.9l-.05-.05a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.02 1.56v.15a2.05 2.05 0 0 1-4.1 0V21a1.7 1.7 0 0 0-1.02-1.56 1.7 1.7 0 0 0-1.88.34l-.05.05a2.05 2.05 0 0 1-2.9-2.9l.05-.05A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.02h-.15a2.05 2.05 0 0 1 0-4.1h.15A1.7 1.7 0 0 0 4.6 8.86a1.7 1.7 0 0 0-.34-1.88l-.05-.05a2.05 2.05 0 0 1 2.9-2.9l.05.05a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10.06 2.86v-.15a2.05 2.05 0 0 1 4.1 0v.15a1.7 1.7 0 0 0 1.02 1.56 1.7 1.7 0 0 0 1.88-.34l.05-.05a2.05 2.05 0 0 1 2.9 2.9l-.05.05a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.02h.15a2.05 2.05 0 0 1 0 4.1h-.15A1.7 1.7 0 0 0 19.4 15Z" />
             </svg>
         </button>
     </div>
@@ -126,11 +127,35 @@
     </div>
 
     <!-- Bookmark Picker Modal -->
-    <div id="bookmark-picker" class="modal hidden">
-        <div class="modal-content">
-            <h2>Select a bookmark or folder</h2>
+    <div id="bookmark-picker" class="modal bookmark-picker hidden" role="dialog" aria-modal="true"
+        aria-labelledby="bookmark-picker-title">
+        <div class="bookmark-picker-header">
+            <div>
+                <h2 id="bookmark-picker-title">Add bookmark or folder</h2>
+                <p id="bookmark-count">Choose any saved bookmark or folder.</p>
+            </div>
+            <button class="btn-close icon-button" title="Close picker" aria-label="Close picker">×</button>
+        </div>
+
+        <div class="bookmark-picker-search">
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m16.5 16.5 4 4" />
+            </svg>
+            <input id="bookmark-search" type="search" placeholder="Search bookmarks" autocomplete="off"
+                aria-label="Search bookmarks" />
+        </div>
+
+        <div class="bookmark-picker-body">
             <div id="bookmark-tree"></div>
-            <button class="btn-close">Close</button>
+            <div id="bookmark-empty" class="bookmark-empty hidden">
+                <strong>No matches</strong>
+                <span>Try a different bookmark title or URL.</span>
+            </div>
+        </div>
+
+        <div class="bookmark-picker-footer">
+            <button class="btn-close secondary-action">Cancel</button>
         </div>
     </div>
 
