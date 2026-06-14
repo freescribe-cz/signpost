@@ -28,8 +28,19 @@
 
     <!-- Toolbar -->
     <div id="toolbar">
-        <button id="btn-add" title="Add bookmark">➕</button>
-        <button id="btn-settings" title="Settings">⚙️</button>
+        <button id="btn-add" title="Add bookmark" aria-label="Add bookmark">
+            <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h7" />
+                <path d="M18 3v6" />
+                <path d="M15 6h6" />
+            </svg>
+        </button>
+        <button id="btn-settings" title="Settings" aria-label="Settings">
+            <svg class="toolbar-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.05.05a2.05 2.05 0 0 1-2.9 2.9l-.05-.05a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.02 1.56v.15a2.05 2.05 0 0 1-4.1 0V21a1.7 1.7 0 0 0-1.02-1.56 1.7 1.7 0 0 0-1.88.34l-.05.05a2.05 2.05 0 0 1-2.9-2.9l.05-.05A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.02h-.15a2.05 2.05 0 0 1 0-4.1h.15A1.7 1.7 0 0 0 4.6 8.86a1.7 1.7 0 0 0-.34-1.88l-.05-.05a2.05 2.05 0 0 1 2.9-2.9l.05.05a1.7 1.7 0 0 0 1.88.34A1.7 1.7 0 0 0 10.06 2.86v-.15a2.05 2.05 0 0 1 4.1 0v.15a1.7 1.7 0 0 0 1.02 1.56 1.7 1.7 0 0 0 1.88-.34l.05-.05a2.05 2.05 0 0 1 2.9 2.9l-.05.05a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.56 1.02h.15a2.05 2.05 0 0 1 0 4.1h-.15A1.7 1.7 0 0 0 19.4 15Z" />
+            </svg>
+        </button>
     </div>
 
     <!-- Settings Panel -->
