@@ -53,7 +53,7 @@ function removeCachedDesktopBackgroundImage() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    const DEFAULT_TILE_BACKGROUND_COLOR = '#ffffff';
+    const FALLBACK_TILE_BACKGROUND_COLOR = '#dbdbdb';
 
     try {
         const cachedBackgroundImage = localStorage.getItem(DESKTOP_BACKGROUND_IMAGE_CACHE_KEY);
@@ -68,8 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return 1 - (Number(globalSettings.tileBackgroundTransparency) || 0) / 100;
     }
 
+    function getDefaultTileBackgroundColor() {
+        return globalSettings.defaultTileBackgroundColor || FALLBACK_TILE_BACKGROUND_COLOR;
+    }
+
     function colorToRgba(color, alpha) {
-        if (!color) color = DEFAULT_TILE_BACKGROUND_COLOR;
+        if (!color) color = getDefaultTileBackgroundColor();
 
         const hex = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
         if (hex) {
@@ -96,15 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = tileEl?.querySelector('.tile');
         if (!content) return;
 
-        const color = baseColor || DEFAULT_TILE_BACKGROUND_COLOR;
+        const color = baseColor || getDefaultTileBackgroundColor();
         content.dataset.baseBackgroundColor = color;
         content.style.backgroundColor = colorToRgba(color, getTileAlpha());
     }
 
     function applyTileTransparencyToAllTiles() {
         grid.engine.nodes.forEach(node => {
-            const baseColor = node.backgroundColor || node.el?.querySelector('.tile')?.dataset.baseBackgroundColor || DEFAULT_TILE_BACKGROUND_COLOR;
-            applyTileBackground(node.el, baseColor);
+            applyTileBackground(node.el, node.backgroundColor);
         });
     }
 
@@ -203,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmBeforeRemove: false,
         tileSize: 140,
         desktopBackgroundColor: '#ffffff',
+        defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
         desktopBackgroundImage: null,
         tileBackgroundTransparency: 50
     };
@@ -212,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
     const backgroundColorInput = document.getElementById('setting-background-color');
+    const defaultTileBackgroundColorInput = document.getElementById('setting-default-tile-background-color');
     const tileTransparencySlider = document.getElementById('setting-tile-transparency');
     const tileTransparencyValue = document.getElementById('setting-tile-transparency-value');
     const backgroundImageInput = document.getElementById('setting-background-image');
@@ -224,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
@@ -241,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
     backgroundColorInput.addEventListener('input', () => {
         globalSettings.desktopBackgroundColor = backgroundColorInput.value;
         document.body.style.backgroundColor = backgroundColorInput.value;
+        chrome.storage.local.set({ globalSettings });
+    });
+    defaultTileBackgroundColorInput.addEventListener('input', () => {
+        globalSettings.defaultTileBackgroundColor = defaultTileBackgroundColorInput.value;
+        applyTileTransparencyToAllTiles();
         chrome.storage.local.set({ globalSettings });
     });
     tileTransparencySlider.addEventListener('input', () => {
@@ -276,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
@@ -623,11 +635,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset background color
         tileEl.querySelector('.reset-bg-color')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            applyTileBackground(tileEl, DEFAULT_TILE_BACKGROUND_COLOR);
             const node = grid.engine.nodes.find(n => n.el === tileEl);
             if (node) {
                 delete node.backgroundColor;
             }
+            applyTileBackground(tileEl);
             saveLayout();
             tileEl.querySelector('.tile-menu')?.classList.add('hidden');
         });
