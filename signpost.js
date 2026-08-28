@@ -96,6 +96,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return color;
     }
 
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        })[char]);
+    }
+
     function applyTileBackground(tileEl, baseColor) {
         const content = tileEl?.querySelector('.tile');
         if (!content) return;
@@ -106,9 +116,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyTileTransparencyToAllTiles() {
-        grid.engine.nodes.forEach(node => {
-            applyTileBackground(node.el, node.backgroundColor);
+        grid.getGridItems().forEach(item => {
+            applyTileBackground(item, item.gridstackNode?.backgroundColor);
         });
+    }
+
+    function findGridNodeById(id) {
+        return grid.getGridItems()
+            .map(item => item.gridstackNode)
+            .find(node => node?.id === String(id));
+    }
+
+    function getGridNode(tileEl) {
+        return tileEl?.gridstackNode;
     }
 
     function updateTileTransparencyValue() {
@@ -119,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
-        el.innerHTML = w.content;
+        el.innerHTML = w.content || '';
         applyTileBackground(el, w.backgroundColor);
         if (w.textColor) {
             const content = el.querySelector('.tile');
@@ -133,6 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         minRow: 5
     }
     const grid = GridStack.init(gridOptions);
+    let suppressLayoutSave = false;
     // Save layout on changes
     grid.on('change', saveLayout);
 
@@ -147,12 +168,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function renderTiles(tiles) {
-        tiles.forEach(tile => {
-            chrome.bookmarks.getSubTree(String(tile.id), (results) => {
-                if (results && results[0]) addTileToGrid(results[0], tile);
+    function getBookmarkSubTree(id) {
+        return new Promise(resolve => {
+            chrome.bookmarks.getSubTree(String(id), (results) => {
+                resolve(results && results[0] ? results[0] : null);
             });
         });
+    }
+
+    async function renderTiles(tiles) {
+        suppressLayoutSave = true;
+        grid.batchUpdate();
+
+        try {
+            const bookmarks = await Promise.all(tiles.map(async (tile) => ({
+                bookmark: await getBookmarkSubTree(tile.id),
+                tile
+            })));
+
+            bookmarks.forEach(({ bookmark, tile }) => {
+                if (bookmark) addTileToGrid(bookmark, tile);
+            });
+        } finally {
+            grid.batchUpdate(false);
+            suppressLayoutSave = false;
+            saveLayout();
+        }
     }
 
     // --- Initial Setup Modal ---
@@ -183,11 +224,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 showBubbleMessage('Bookmarks Bar is empty');
             }
 
-            // Batch add for smoother GridStack updates
-            if (grid.batchUpdate) grid.batchUpdate();
-            children.forEach(child => addTileToGrid(child));
-            if (grid.batchUpdate) grid.batchUpdate(false);
-
+            suppressLayoutSave = true;
+            grid.batchUpdate();
+            try {
+                children.forEach(child => addTileToGrid(child));
+            } finally {
+                grid.batchUpdate(false);
+                suppressLayoutSave = false;
+            }
             saveLayout();
             chrome.storage.local.set({ setupComplete: true });
             closeModal(setupModal);
@@ -362,7 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Saving layout
     function saveLayout() {
-        const layout = grid.engine.nodes.map(node => {
+        if (suppressLayoutSave || grid.isIgnoreChangeCB()) return;
+
+        const layout = grid.getGridItems().map(item => {
+            const node = item.gridstackNode;
             return {
                 x: node.x,
                 y: node.y,
@@ -592,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function addTileToGrid(bookmark, pos) {
         // Check the widget isn't in the grid yet
-        const existingNode = grid.engine.nodes.find(n => n.id === `${bookmark.id}`);
+        const existingNode = findGridNodeById(bookmark.id);
         if (existingNode) {
             showBubbleMessage("Widget already present!");
             const tileEl = existingNode.el;
@@ -614,13 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             outer: for (y = 0; y < 100; y++) { // max 100 rows
                 for (x = 0; x <= gridWidth - w; x++) {
-                    const collision = grid.engine.nodes.some(n =>
-                        x < n.x + n.w &&
-                        x + w > n.x &&
-                        y < n.y + n.h &&
-                        y + h > n.y
-                    );
-                    if (!collision) {
+                    if (grid.isAreaEmpty(x, y, w, h)) {
                         found = true;
                         break outer;
                     }
@@ -644,14 +685,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Bookmark link
                     const faviconURL = getFavicon(child.url, 16);
                     contentHTML = `
-    <a class="bookmark-link" href="${child.url}" title="${child.title}" target="${openTarget}">
-        <img class="favicon" src="${faviconURL}"/>
+    <a class="bookmark-link" href="${escapeHTML(child.url)}" title="${escapeHTML(child.title)}" target="${openTarget}">
+        <img class="favicon" src="${escapeHTML(faviconURL)}"/>
     </a>
     `;
                 } else {
                     // Folder
                     contentHTML = `
-    <span class="bookmark-link bookmark-folder" title="${child.title}" data-id="${child.id}">📁</span>
+    <span class="bookmark-link bookmark-folder" title="${escapeHTML(child.title)}" data-id="${escapeHTML(child.id)}">📁</span>
     `;
                 }
                 childListHTML += `
@@ -660,7 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   `;
             });
-            tileHeaderTitleText = `📁 ${bookmark.title}`;
+            tileHeaderTitleText = `📁 ${escapeHTML(bookmark.title)}`;
             tileBodyHTML = `
               <div class="tile-body folder-content">
                 ${childListHTML}
@@ -671,9 +712,9 @@ document.addEventListener('DOMContentLoaded', () => {
             tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">
-                <a class="bookmark-link" href="${bookmark.url}" title="${bookmark.title}" target="${openTarget}">
-                    <img class="favicon-large" src="${faviconURL}"/>
-                    <div class="bookmark-title">${bookmark.title}</div>
+                <a class="bookmark-link" href="${escapeHTML(bookmark.url)}" title="${escapeHTML(bookmark.title)}" target="${openTarget}">
+                    <img class="favicon-large" src="${escapeHTML(faviconURL)}"/>
+                    <div class="bookmark-title">${escapeHTML(bookmark.title)}</div>
                 </a>
               </div>
               `;
@@ -709,10 +750,12 @@ document.addEventListener('DOMContentLoaded', () => {
             textColor: pos?.textColor || ''
         });
 
+        if (!widget) return;
+
         requestAnimationFrame(() => {
-            applyTileBackground(widget.el, pos?.backgroundColor);
+            applyTileBackground(widget, pos?.backgroundColor);
             if (!bookmark.url && pos?.textColor) {
-                const title = widget.el?.querySelector('.folder-title');
+                const title = widget.querySelector('.folder-title');
                 if (title) title.style.color = pos.textColor;
             }
         });
@@ -768,7 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             openColorPicker((color) => {
                 applyTileBackground(tileEl, color);
-                const node = grid.engine.nodes.find(n => n.el === tileEl);
+                const node = getGridNode(tileEl);
                 if (node) node.backgroundColor = color;
 
                 saveLayout();
@@ -777,7 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset background color
         tileEl.querySelector('.reset-bg-color')?.addEventListener('click', (e) => {
             e.stopPropagation();
-            const node = grid.engine.nodes.find(n => n.el === tileEl);
+            const node = getGridNode(tileEl);
             if (node) {
                 delete node.backgroundColor;
             }
@@ -795,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (title) {
                         title.style.color = color;
                     }
-                    const node = grid.engine.nodes.find(n => n.el === tileEl);
+                    const node = getGridNode(tileEl);
                     if (node) node.textColor = color;
                     saveLayout();
                 });
@@ -807,19 +850,13 @@ document.addEventListener('DOMContentLoaded', () => {
             folderEl.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const folderId = folderEl.getAttribute('data-id');
-                const node = grid.engine.nodes.find(n => n.el === tileEl);
+                const node = getGridNode(tileEl);
                 let x = 0, y = 0;
                 if (node) {
                     const gridWidth = grid.getColumn();
                     const proposedX = node.x + node.w;
-                    const sameRowWidgets = grid.engine.nodes.filter(n =>
-                        n.y < node.y + node.h && n.y + n.h > node.y
-                    );
-                    const overlapRight = sameRowWidgets.some(n =>
-                        n.x < proposedX + 1 && n.x + n.w > proposedX
-                    );
 
-                    if (proposedX + 1 <= gridWidth && !overlapRight) {
+                    if (proposedX + 1 <= gridWidth && grid.isAreaEmpty(proposedX, node.y, 1, 1)) {
                         x = proposedX;
                         y = node.y;
                     } else {
