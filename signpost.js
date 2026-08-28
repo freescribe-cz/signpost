@@ -75,6 +75,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function colorToRgba(color, alpha) {
         if (!color) color = getDefaultTileBackgroundColor();
 
+        const rgbComponents = colorToRgbComponents(color);
+        if (rgbComponents) {
+            return `rgba(${rgbComponents.r}, ${rgbComponents.g}, ${rgbComponents.b}, ${alpha})`;
+        }
+
+        return color;
+    }
+
+    function colorToRgbComponents(color) {
+        if (!color) color = getDefaultTileBackgroundColor();
+
         const hex = color.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
         if (hex) {
             let value = hex[1];
@@ -85,15 +96,38 @@ document.addEventListener('DOMContentLoaded', () => {
             const r = (intValue >> 16) & 255;
             const g = (intValue >> 8) & 255;
             const b = intValue & 255;
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            return { r, g, b };
         }
 
         const rgb = color.trim().match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
         if (rgb) {
-            return `rgba(${rgb[1]}, ${rgb[2]}, ${rgb[3]}, ${alpha})`;
+            return { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]) };
         }
 
-        return color;
+        return null;
+    }
+
+    function mixChannel(value, target, amount) {
+        return Math.round(value + (target - value) * amount);
+    }
+
+    function getScrollbarColors(color) {
+        const rgb = colorToRgbComponents(color);
+        if (!rgb) {
+            return { thumb: '', track: '' };
+        }
+
+        const luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+        const target = luminance > 0.55 ? 0 : 255;
+        const amount = 0.28;
+        const r = mixChannel(rgb.r, target, amount);
+        const g = mixChannel(rgb.g, target, amount);
+        const b = mixChannel(rgb.b, target, amount);
+
+        return {
+            thumb: `rgba(${r}, ${g}, ${b}, 0.32)`,
+            track: `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.08)`
+        };
     }
 
     function escapeHTML(value) {
@@ -113,8 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const color = baseColor || getDefaultTileBackgroundColor();
         const tileBackground = colorToRgba(color, getTileAlpha());
         const header = content.querySelector('.tile-header');
+        const scrollbarColors = getScrollbarColors(color);
         content.dataset.baseBackgroundColor = color;
         content.style.backgroundColor = tileBackground;
+        content.style.setProperty('--tile-scrollbar-thumb', scrollbarColors.thumb);
+        content.style.setProperty('--tile-scrollbar-track', scrollbarColors.track);
         if (header) {
             header.style.backgroundColor = content.classList.contains('folder-tile') ? tileBackground : '';
         }

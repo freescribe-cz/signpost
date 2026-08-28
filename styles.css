@@ -766,14 +766,29 @@ button:hover {
    flex-grow: 1;
    flex-direction: column;
    display: flex;
-   padding: 0 8px 8px;
+   padding: 0 2px 2px 6px;
    overflow-y: auto;
    overflow-x: hidden;
    text-overflow: ellipsis;
+   scrollbar-width: thin;
+   scrollbar-color: var(--tile-scrollbar-thumb, rgba(0, 0, 0, 0.2)) var(--tile-scrollbar-track, transparent);
 }
 
 .tile-body.center {
    margin-top: -8px;
+}
+
+.tile-body::-webkit-scrollbar {
+   width: 6px;
+}
+
+.tile-body::-webkit-scrollbar-track {
+   background: var(--tile-scrollbar-track, transparent);
+}
+
+.tile-body::-webkit-scrollbar-thumb {
+   background-color: var(--tile-scrollbar-thumb, rgba(0, 0, 0, 0.2));
+   border-radius: 999px;
 }
 
 .folder-content {
