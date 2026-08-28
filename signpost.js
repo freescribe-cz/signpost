@@ -137,6 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function applyResizeHandleSetting() {
+        grid.opts.alwaysShowResizeHandle = globalSettings.alwaysShowResizeHandle;
+        grid.getGridItems().forEach(item => grid.prepareDragDrop(item, true));
+    }
+
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content || '';
@@ -150,7 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
         column: 18,
         float: true,
         margin: 6,
-        minRow: 5
+        minRow: 5,
+        alwaysShowResizeHandle: false
     }
     const grid = GridStack.init(gridOptions);
     let suppressLayoutSave = false;
@@ -252,13 +258,15 @@ document.addEventListener('DOMContentLoaded', () => {
         desktopBackgroundColor: '#ffffff',
         defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
         desktopBackgroundImage: null,
-        tileBackgroundTransparency: 50
+        tileBackgroundTransparency: 50,
+        alwaysShowResizeHandle: false
     };
 
     let globalSettings = { ...defaultSettings };
 
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
+    const alwaysShowResizeHandleCheckbox = document.getElementById('setting-always-show-resize-handle');
     const backgroundColorInput = document.getElementById('setting-background-color');
     const defaultTileBackgroundColorInput = document.getElementById('setting-default-tile-background-color');
     const tileTransparencySlider = document.getElementById('setting-tile-transparency');
@@ -272,11 +280,13 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.assign(globalSettings, data.globalSettings || {});
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
+        alwaysShowResizeHandleCheckbox.checked = globalSettings.alwaysShowResizeHandle;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        applyResizeHandleSetting();
         applyTileTransparencyToAllTiles();
     });
     // Save updated settings on change
@@ -286,6 +296,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     confirmBeforeRemoveCheckbox.addEventListener('change', () => {
         globalSettings.confirmBeforeRemove = confirmBeforeRemoveCheckbox.checked;
+        chrome.storage.local.set({ globalSettings });
+    });
+    alwaysShowResizeHandleCheckbox.addEventListener('change', () => {
+        globalSettings.alwaysShowResizeHandle = alwaysShowResizeHandleCheckbox.checked;
+        applyResizeHandleSetting();
         chrome.storage.local.set({ globalSettings });
     });
     backgroundColorInput.addEventListener('input', () => {
@@ -330,11 +345,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply UI changes
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
+        alwaysShowResizeHandleCheckbox.checked = globalSettings.alwaysShowResizeHandle;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        applyResizeHandleSetting();
         applyTileTransparencyToAllTiles();
         backgroundImageInput.value = '';
         clearDesktopBackgroundImage();
