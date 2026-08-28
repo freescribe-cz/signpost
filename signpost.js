@@ -111,8 +111,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!content) return;
 
         const color = baseColor || getDefaultTileBackgroundColor();
+        const tileBackground = colorToRgba(color, getTileAlpha());
+        const header = content.querySelector('.tile-header');
         content.dataset.baseBackgroundColor = color;
-        content.style.backgroundColor = colorToRgba(color, getTileAlpha());
+        content.style.backgroundColor = tileBackground;
+        if (header) {
+            header.style.backgroundColor = content.classList.contains('folder-tile') ? tileBackground : '';
+        }
     }
 
     function applyTileTransparencyToAllTiles() {
@@ -718,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
   `;
             });
-            tileHeaderTitleText = `📁 ${escapeHTML(bookmark.title)}`;
+            tileHeaderTitleText = escapeHTML(bookmark.title);
             tileBodyHTML = `
               <div class="tile-body folder-content">
                 ${childListHTML}
@@ -737,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
               `;
         }
         const textColorItem = !bookmark.url
-            ? `<div class="tile-menu-item set-text-color">Set text color</div>`
+            ? `<div class="tile-menu-item set-text-color">Set title color</div>`
             : '';
         tileHeaderHTML = `
             <div class="tile-header">
@@ -753,7 +758,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             `;
         const tileHTML = `
-            <div class="tile">
+            <div class="tile${bookmark.url ? '' : ' folder-tile'}">
             ${tileHeaderHTML}
             ${tileBodyHTML}
             </div>

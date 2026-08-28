@@ -474,7 +474,7 @@ button:hover {
    padding: 0 0 0 22px;
 }
 
-#bookmark-tree > .bookmark-tree-list {
+#bookmark-tree>.bookmark-tree-list {
    padding-left: 0;
 }
 
@@ -489,7 +489,7 @@ button:hover {
    margin: 2px 0;
 }
 
-.bookmark-tree-item > .bookmark-tree-list {
+.bookmark-tree-item>.bookmark-tree-list {
    grid-column: 2;
 }
 
@@ -505,7 +505,7 @@ button:hover {
    border-radius: 8px;
 }
 
-.bookmark-tree-item.search-match > .bookmark-row {
+.bookmark-tree-item.search-match>.bookmark-row {
    background: rgba(47, 115, 95, 0.1);
 }
 
@@ -664,7 +664,7 @@ button:hover {
 }
 
 .tile {
-   padding: 8px;
+   padding: 0;
    overflow: visible;
    word-wrap: break-word;
    border-radius: 6px;
@@ -678,6 +678,7 @@ button:hover {
 .tile-header,
 .tile-body {
    width: 100%;
+   box-sizing: border-box;
 }
 
 .tile-header {
@@ -686,24 +687,33 @@ button:hover {
    align-items: center;
    margin-bottom: 6px;
    position: relative;
-   height: 2.5ex;
+   height: 3ex;
+   padding: 8px 0 8px 8px;
+   border-radius: 6px 6px 0 0;
 }
 
 .folder-title {
    background: none;
    font-weight: bold;
-   margin-bottom: 6px;
-   height: 2.5ex;
+   margin-bottom: 0;
+   min-width: 0;
+   height: 3ex;
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;
 }
 
 .tile-menu-icon {
-   display: none;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   flex: 0 0 24px;
+   width: 2ex;
+   height: 3ex;
+   visibility: hidden;
    background-color: rgba(0, 0, 0, 0.15);
    color: black !important;
-   padding: 5px;
+   padding: 0;
    border-radius: 3px;
    cursor: pointer;
    user-select: none;
@@ -713,7 +723,7 @@ button:hover {
 }
 
 .grid-stack-item-content:hover .tile-menu-icon {
-   display: inline-block;
+   visibility: visible;
 }
 
 .tile-menu {
@@ -721,7 +731,6 @@ button:hover {
    position: absolute;
    top: 0;
    left: 100%;
-   margin-left: 8px;
    width: 160px;
    z-index: 10;
    background: white;
@@ -734,8 +743,6 @@ button:hover {
 .tile-menu.flip-left {
    left: auto;
    right: 100%;
-   margin-left: 0;
-   margin-right: 8px;
 }
 
 .tile-menu-item {
@@ -759,6 +766,7 @@ button:hover {
    flex-grow: 1;
    flex-direction: column;
    display: flex;
+   padding: 0 8px 8px;
    overflow-y: auto;
    overflow-x: hidden;
    text-overflow: ellipsis;
