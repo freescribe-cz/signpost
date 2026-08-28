@@ -1,2 +1,4 @@
+.agents/
 .vscode/
-
+.codex/
+node_modules/
