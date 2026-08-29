@@ -379,8 +379,12 @@ document.addEventListener('DOMContentLoaded', () => {
     clearBackgroundBtn.addEventListener('click', () => {
         clearDesktopBackgroundImage();
         backgroundImageInput.value = ''; // ← clears the input field
+        globalSettings.desktopBackgroundColor = defaultSettings.desktopBackgroundColor;
+        backgroundColorInput.value = globalSettings.desktopBackgroundColor;
+        document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
         removeCachedDesktopBackgroundImage();
         chrome.storage.local.remove('desktopBackgroundImage');
+        chrome.storage.local.set({ globalSettings });
     });
     resetSettingsBtn.addEventListener('click', () => {
         Object.assign(globalSettings, defaultSettings);
