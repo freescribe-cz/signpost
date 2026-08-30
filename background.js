@@ -10,28 +10,34 @@ const MAX_GRID_COLUMNS = 36;
 const WEB_PAGE_URL_PATTERNS = ['http://*/*', 'https://*/*'];
 const ACTIVE_TAB_SIGNPOST_STATE_KEY = 'activeTabSignpostState';
 
-chrome.runtime.onInstalled.addListener(createContextMenus);
-chrome.runtime.onStartup.addListener(createContextMenus);
-chrome.runtime.onInstalled.addListener(refreshCurrentActiveTabSignpostState);
-chrome.runtime.onStartup.addListener(refreshCurrentActiveTabSignpostState);
+addEventListenerIfAvailable(chrome.runtime?.onInstalled, createContextMenus);
+addEventListenerIfAvailable(chrome.runtime?.onStartup, createContextMenus);
+addEventListenerIfAvailable(chrome.runtime?.onInstalled, refreshCurrentActiveTabSignpostState);
+addEventListenerIfAvailable(chrome.runtime?.onStartup, refreshCurrentActiveTabSignpostState);
 
-chrome.tabs.onActivated.addListener(({ tabId }) => {
+addEventListenerIfAvailable(chrome.tabs?.onActivated, ({ tabId }) => {
     refreshActiveTabSignpostState(tabId);
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+addEventListenerIfAvailable(chrome.tabs?.onUpdated, (tabId, changeInfo, tab) => {
     if (!tab.active || (!changeInfo.url && changeInfo.status !== 'complete')) return;
     refreshActiveTabSignpostState(tabId, tab);
 });
 
-chrome.storage.onChanged.addListener((changes, areaName) => {
+addEventListenerIfAvailable(chrome.storage?.onChanged, (changes, areaName) => {
     if (areaName !== 'local' || !changes.tiles) return;
     refreshCurrentActiveTabSignpostState();
 });
 
-chrome.bookmarks.onCreated.addListener(refreshCurrentActiveTabSignpostState);
-chrome.bookmarks.onRemoved.addListener(refreshCurrentActiveTabSignpostState);
-chrome.bookmarks.onChanged.addListener(refreshCurrentActiveTabSignpostState);
+addEventListenerIfAvailable(chrome.bookmarks?.onCreated, refreshCurrentActiveTabSignpostState);
+addEventListenerIfAvailable(chrome.bookmarks?.onRemoved, refreshCurrentActiveTabSignpostState);
+addEventListenerIfAvailable(chrome.bookmarks?.onChanged, refreshCurrentActiveTabSignpostState);
+
+function addEventListenerIfAvailable(event, listener) {
+    if (typeof event?.addListener === 'function') {
+        event.addListener(listener);
+    }
+}
 
 function createContextMenus() {
     chrome.contextMenus.removeAll(() => {
