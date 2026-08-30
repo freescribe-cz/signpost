@@ -23,7 +23,8 @@
     "bookmarks",
     "contextMenus",
     "favicon",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "icons": {
     "16": "icons/icon16.png",

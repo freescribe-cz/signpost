@@ -2,7 +2,7 @@ const addMenuItem = document.getElementById('add-current-site');
 const rateMenuItem = document.getElementById('rate-extension');
 const REVIEWS_URL = 'https://chromewebstore.google.com/detail/signpost-visual-bookmarks/gjcofdjpkgbcaecncclpfofkigeggnif/reviews';
 const ADD_LABEL = 'Add page to Signpost';
-const BOOKMARKED_LABEL = 'Already bookmarked';
+const BOOKMARKED_LABEL = 'Already on Signpost';
 
 let activeTab = null;
 let isAdding = false;
@@ -13,7 +13,8 @@ async function init() {
     try {
         activeTab = await getActiveTab();
         validateTab(activeTab);
-        if (await hasDesktopBookmark(activeTab.url)) {
+        const state = await getCachedSignpostState(activeTab.id);
+        if (state?.isOnSignpost) {
             setAddMenuItemState({ disabled: true, label: BOOKMARKED_LABEL });
         }
     } catch (err) {
@@ -44,6 +45,7 @@ async function addCurrentSite() {
         const response = await sendMessage({
             type: 'add-current-tab-to-signpost',
             tab: {
+                id: activeTab.id,
                 url: activeTab.url,
                 title: activeTab.title
             }
@@ -91,37 +93,17 @@ function sendMessage(message) {
     });
 }
 
-async function hasDesktopBookmark(url) {
-    const [bookmarks, data] = await Promise.all([
-        bookmarksSearch({ url }),
-        storageGet({ tiles: [] })
-    ]);
-    const bookmark = bookmarks[0];
-    if (!bookmark) return false;
-
-    const tiles = Array.isArray(data.tiles) ? data.tiles : [];
-
-    return tiles.some((tile) => String(tile.id) === String(bookmark.id));
-}
-
-function bookmarksSearch(query) {
-    return new Promise((resolve, reject) => {
-        chrome.bookmarks.search(query, (results) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(results || []);
-        });
+async function getCachedSignpostState(tabId) {
+    const response = await sendMessage({
+        type: 'get-active-tab-signpost-state',
+        tabId
     });
-}
 
-function storageGet(defaults) {
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get(defaults, (data) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(data);
-        });
-    });
+    if (!response?.ok) {
+        throw new Error(response?.error || 'Could not read Signpost state.');
+    }
+
+    return response.state;
 }
 
 function validateTab(tab) {

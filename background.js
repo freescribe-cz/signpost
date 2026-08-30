@@ -1,24 +1,64 @@
-const ACTION_MENU_ID = 'add-to-signpost';
+const PAGE_CONTEXT_MENU_ID = 'add-page-to-signpost';
+const LINK_CONTEXT_MENU_ID = 'add-link-to-signpost';
+const ACTION_CONTEXT_MENU_ID = 'add-to-signpost-action';
+const ADD_CONTEXT_MENU_IDS = new Set([PAGE_CONTEXT_MENU_ID, LINK_CONTEXT_MENU_ID, ACTION_CONTEXT_MENU_ID]);
 const SIGNPOST_BOOKMARKS_FOLDER = 'Signpost Bookmarks';
 const BOOKMARKS_BAR_ID = '1';
 const DEFAULT_GRID_COLUMNS = 18;
 const MIN_GRID_COLUMNS = 6;
 const MAX_GRID_COLUMNS = 36;
+const WEB_PAGE_URL_PATTERNS = ['http://*/*', 'https://*/*'];
+const ACTIVE_TAB_SIGNPOST_STATE_KEY = 'activeTabSignpostState';
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(createContextMenus);
+chrome.runtime.onStartup.addListener(createContextMenus);
+chrome.runtime.onInstalled.addListener(refreshCurrentActiveTabSignpostState);
+chrome.runtime.onStartup.addListener(refreshCurrentActiveTabSignpostState);
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+    refreshActiveTabSignpostState(tabId);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (!tab.active || (!changeInfo.url && changeInfo.status !== 'complete')) return;
+    refreshActiveTabSignpostState(tabId, tab);
+});
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !changes.tiles) return;
+    refreshCurrentActiveTabSignpostState();
+});
+
+chrome.bookmarks.onCreated.addListener(refreshCurrentActiveTabSignpostState);
+chrome.bookmarks.onRemoved.addListener(refreshCurrentActiveTabSignpostState);
+chrome.bookmarks.onChanged.addListener(refreshCurrentActiveTabSignpostState);
+
+function createContextMenus() {
     chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({
-            id: ACTION_MENU_ID,
+            id: PAGE_CONTEXT_MENU_ID,
+            title: 'Add page to Signpost',
+            contexts: ['page'],
+            documentUrlPatterns: WEB_PAGE_URL_PATTERNS
+        });
+        chrome.contextMenus.create({
+            id: LINK_CONTEXT_MENU_ID,
+            title: 'Add link to Signpost',
+            contexts: ['link'],
+            targetUrlPatterns: WEB_PAGE_URL_PATTERNS
+        });
+        chrome.contextMenus.create({
+            id: ACTION_CONTEXT_MENU_ID,
             title: 'Add page to Signpost',
             contexts: ['action']
         });
     });
-});
+}
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId !== ACTION_MENU_ID) return;
+    if (!ADD_CONTEXT_MENU_IDS.has(info.menuItemId)) return;
 
-    addTabToSignpost(tab)
+    addContextClickToSignpost(info, tab)
         .then(() => showTemporaryBadge('OK', tab?.id))
         .catch((err) => {
             console.warn('Could not add current tab to Signpost.', err);
@@ -27,6 +67,14 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === 'get-active-tab-signpost-state') {
+        getCachedActiveTabSignpostState(message.tabId)
+            .then((state) => sendResponse({ ok: true, state }))
+            .catch((err) => sendResponse({ ok: false, error: err.message || String(err) }));
+
+        return true;
+    }
+
     if (message?.type !== 'add-current-tab-to-signpost') return false;
 
     addTabToSignpost(message.tab)
@@ -38,6 +86,28 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function addTabToSignpost(tab) {
     const site = getSiteFromTab(tab);
+    const result = await addSiteToSignpost(site);
+    if (tab?.id) {
+        saveActiveTabSignpostState({
+            tabId: tab.id,
+            url: site.url,
+            isOnSignpost: true
+        }).catch((err) => {
+            console.warn('Could not cache active tab Signpost state.', err);
+        });
+    }
+    return result;
+}
+
+async function addContextClickToSignpost(info, tab) {
+    const site = info.menuItemId === LINK_CONTEXT_MENU_ID
+        ? getSiteFromLink(info.linkUrl)
+        : getSiteFromTab(tab);
+
+    return addSiteToSignpost(site);
+}
+
+async function addSiteToSignpost(site) {
     const bookmark = await getOrCreateBookmark(site);
     const tileResult = await addBookmarkTile(bookmark);
 
@@ -45,6 +115,94 @@ async function addTabToSignpost(tab) {
         bookmark,
         addedTile: tileResult.added,
         alreadyPresent: !tileResult.added
+    };
+}
+
+async function refreshCurrentActiveTabSignpostState() {
+    try {
+        const tabs = await tabsQuery({ active: true, currentWindow: true });
+        const tab = tabs[0];
+        if (tab?.id) await refreshActiveTabSignpostState(tab.id, tab);
+    } catch (err) {
+        console.warn('Could not refresh active tab Signpost state.', err);
+    }
+}
+
+async function refreshActiveTabSignpostState(tabId, tab) {
+    try {
+        const activeTab = tab || await tabsGet(tabId);
+        const site = getSiteFromTab(activeTab);
+        const isOnSignpost = await hasDesktopBookmark(site.url);
+
+        await saveActiveTabSignpostState({
+            tabId,
+            url: site.url,
+            isOnSignpost
+        });
+    } catch (err) {
+        await saveActiveTabSignpostState({
+            tabId,
+            url: '',
+            isOnSignpost: false
+        });
+    }
+}
+
+function getCachedActiveTabSignpostState(tabId) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.session.get({ [ACTIVE_TAB_SIGNPOST_STATE_KEY]: null }, (data) => {
+            const err = chrome.runtime.lastError;
+            if (err) {
+                reject(new Error(err.message));
+                return;
+            }
+
+            const state = data[ACTIVE_TAB_SIGNPOST_STATE_KEY];
+            if (!state || Number(state.tabId) !== Number(tabId)) {
+                resolve({ tabId, url: '', isOnSignpost: false, known: false });
+                return;
+            }
+
+            resolve({ ...state, known: true });
+        });
+    });
+}
+
+function saveActiveTabSignpostState(state) {
+    return new Promise((resolve, reject) => {
+        chrome.storage.session.set({ [ACTIVE_TAB_SIGNPOST_STATE_KEY]: state }, () => {
+            const err = chrome.runtime.lastError;
+            if (err) reject(new Error(err.message));
+            else resolve();
+        });
+    });
+}
+
+async function hasDesktopBookmark(url) {
+    const [bookmarks, data] = await Promise.all([
+        bookmarksSearch({ url }),
+        storageGet({ tiles: [] })
+    ]);
+    const tiles = Array.isArray(data.tiles) ? data.tiles : [];
+
+    return bookmarks.some((bookmark) =>
+        tiles.some((tile) => String(tile.id) === String(bookmark.id))
+    );
+}
+
+function getSiteFromLink(linkUrl) {
+    if (!linkUrl) {
+        throw new Error('No link URL is available.');
+    }
+
+    const url = new URL(linkUrl);
+    if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new Error('Only web links can be added to Signpost.');
+    }
+
+    return {
+        url: linkUrl,
+        title: url.hostname
     };
 }
 
@@ -114,7 +272,8 @@ async function addBookmarkTile(bookmark) {
         ...position,
         id: bookmarkId,
         backgroundColor: '',
-        textColor: ''
+        textColor: '',
+        bookmarkSnapshot: createBookmarkSnapshot(bookmark)
     };
 
     await storageSet({
@@ -123,6 +282,16 @@ async function addBookmarkTile(bookmark) {
     });
 
     return { added: true };
+}
+
+function createBookmarkSnapshot(bookmark) {
+    return {
+        id: String(bookmark.id),
+        title: bookmark.title || '',
+        url: bookmark.url || '',
+        isFolder: !bookmark.url,
+        children: []
+    };
 }
 
 function normalizeGridColumns(value) {
@@ -219,6 +388,26 @@ function storageSet(data) {
             const err = chrome.runtime.lastError;
             if (err) reject(new Error(err.message));
             else resolve();
+        });
+    });
+}
+
+function tabsGet(tabId) {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.get(tabId, (tab) => {
+            const err = chrome.runtime.lastError;
+            if (err) reject(new Error(err.message));
+            else resolve(tab);
+        });
+    });
+}
+
+function tabsQuery(queryInfo) {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.query(queryInfo, (tabs) => {
+            const err = chrome.runtime.lastError;
+            if (err) reject(new Error(err.message));
+            else resolve(tabs || []);
         });
     });
 }
