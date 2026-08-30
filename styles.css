@@ -707,8 +707,8 @@ button:hover {
    display: inline-flex;
    align-items: center;
    justify-content: center;
-   flex: 0 0 24px;
-   width: 2ex;
+   flex: 0 0 18px;
+   width: 18px;
    height: 3ex;
    visibility: hidden;
    background-color: rgba(180, 180, 180, 0.75);
