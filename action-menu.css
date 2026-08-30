@@ -1,0 +1,58 @@
+html {
+    background: transparent;
+}
+
+body {
+    min-width: 180px;
+    margin: 0;
+    padding: 0;
+    color: #242424;
+    background: #ffffff;
+    font: 14px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.action-menu-shell {
+    width: 180px;
+    background: #ffffff;
+}
+
+.action-menu {
+    width: 180px;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    font-weight: normal;
+}
+
+.action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    outline: none;
+}
+
+.action-menu-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    fill: currentColor;
+}
+
+.action-menu-item:hover,
+.action-menu-item:focus {
+    background-color: #eee;
+}
+
+.action-menu-item[aria-disabled="true"] {
+    cursor: default;
+    color: #8a8883;
+}
+
+.action-menu-item[aria-disabled="true"]:hover,
+.action-menu-item[aria-disabled="true"]:focus {
+    background-color: transparent;
+}
