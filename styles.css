@@ -726,6 +726,10 @@ button:hover {
    visibility: visible;
 }
 
+body.always-show-menu-icon .tile-menu-icon {
+   visibility: visible;
+}
+
 .tile-menu {
    display: block;
    position: absolute;

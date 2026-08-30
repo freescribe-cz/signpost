@@ -184,6 +184,10 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.getGridItems().forEach(item => grid.prepareDragDrop(item, true));
     }
 
+    function applyMenuIconSetting() {
+        document.body.classList.toggle('always-show-menu-icon', globalSettings.alwaysShowMenuIcon);
+    }
+
     // Set how content is applied to widgets
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content || '';
@@ -301,7 +305,8 @@ document.addEventListener('DOMContentLoaded', () => {
         defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
         desktopBackgroundImage: null,
         tileBackgroundTransparency: 50,
-        alwaysShowResizeHandle: false
+        alwaysShowResizeHandle: false,
+        alwaysShowMenuIcon: false
     };
 
     let globalSettings = { ...defaultSettings };
@@ -309,6 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openInNewTabCheckbox = document.getElementById('setting-new-tab');
     const confirmBeforeRemoveCheckbox = document.getElementById('setting-confirm-remove');
     const alwaysShowResizeHandleCheckbox = document.getElementById('setting-always-show-resize-handle');
+    const alwaysShowMenuIconCheckbox = document.getElementById('setting-always-show-menu-icon');
     const backgroundColorInput = document.getElementById('setting-background-color');
     const defaultTileBackgroundColorInput = document.getElementById('setting-default-tile-background-color');
     const tileTransparencySlider = document.getElementById('setting-tile-transparency');
@@ -323,12 +329,14 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
         alwaysShowResizeHandleCheckbox.checked = globalSettings.alwaysShowResizeHandle;
+        alwaysShowMenuIconCheckbox.checked = globalSettings.alwaysShowMenuIcon;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
         applyResizeHandleSetting();
+        applyMenuIconSetting();
         applyTileTransparencyToAllTiles();
     });
     // Save updated settings on change
@@ -343,6 +351,11 @@ document.addEventListener('DOMContentLoaded', () => {
     alwaysShowResizeHandleCheckbox.addEventListener('change', () => {
         globalSettings.alwaysShowResizeHandle = alwaysShowResizeHandleCheckbox.checked;
         applyResizeHandleSetting();
+        chrome.storage.local.set({ globalSettings });
+    });
+    alwaysShowMenuIconCheckbox.addEventListener('change', () => {
+        globalSettings.alwaysShowMenuIcon = alwaysShowMenuIconCheckbox.checked;
+        applyMenuIconSetting();
         chrome.storage.local.set({ globalSettings });
     });
     backgroundColorInput.addEventListener('input', () => {
@@ -392,12 +405,14 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTabCheckbox.checked = globalSettings.openInNewTab;
         confirmBeforeRemoveCheckbox.checked = globalSettings.confirmBeforeRemove;
         alwaysShowResizeHandleCheckbox.checked = globalSettings.alwaysShowResizeHandle;
+        alwaysShowMenuIconCheckbox.checked = globalSettings.alwaysShowMenuIcon;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
         applyResizeHandleSetting();
+        applyMenuIconSetting();
         applyTileTransparencyToAllTiles();
         backgroundImageInput.value = '';
         clearDesktopBackgroundImage();
