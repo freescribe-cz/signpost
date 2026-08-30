@@ -54,6 +54,9 @@ function removeCachedDesktopBackgroundImage() {
 document.addEventListener('DOMContentLoaded', () => {
 
     const FALLBACK_TILE_BACKGROUND_COLOR = '#dbdbdb';
+    const DEFAULT_GRID_COLUMNS = 18;
+    const MIN_GRID_COLUMNS = 6;
+    const MAX_GRID_COLUMNS = 36;
 
     try {
         const cachedBackgroundImage = localStorage.getItem(DESKTOP_BACKGROUND_IMAGE_CACHE_KEY);
@@ -179,6 +182,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function normalizeGridColumns(value) {
+        const columns = Number.parseInt(value, 10);
+        if (!Number.isFinite(columns)) return DEFAULT_GRID_COLUMNS;
+        return Math.min(MAX_GRID_COLUMNS, Math.max(MIN_GRID_COLUMNS, columns));
+    }
+
+    function updateGridColumnsValue() {
+        const columns = normalizeGridColumns(globalSettings.gridColumns);
+        if (gridColumnsSlider) gridColumnsSlider.value = columns;
+        if (gridColumnsValue) gridColumnsValue.textContent = columns;
+    }
+
+    function applyGridColumnSetting({ saveTiles = false } = {}) {
+        const columns = normalizeGridColumns(globalSettings.gridColumns);
+        globalSettings.gridColumns = columns;
+        updateGridColumnsValue();
+
+        if (grid.getColumn() === columns) return;
+
+        grid.column(columns, 'move');
+        if (typeof grid.onResize === 'function') grid.onResize();
+        if (saveTiles) saveLayout();
+    }
+
     function applyResizeHandleSetting() {
         grid.opts.alwaysShowResizeHandle = globalSettings.alwaysShowResizeHandle;
         grid.getGridItems().forEach(item => grid.prepareDragDrop(item, true));
@@ -198,33 +225,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     const gridOptions = {
-        column: 18,
+        column: DEFAULT_GRID_COLUMNS,
         float: true,
         margin: 6,
         minRow: 5,
+        cellHeight: 'auto',
         alwaysShowResizeHandle: false
     }
     const grid = GridStack.init(gridOptions);
     let suppressLayoutSave = false;
+    let initialLayoutLoaded = false;
     // Save layout on changes
     grid.on('change', saveLayout);
-
-    // Load layout on startup from LOCAL, show first-run setup if empty
-    chrome.storage.local.get({ tiles: [], setupComplete: false }, (loc) => {
-        let { tiles, setupComplete } = loc;
-
-        if (tiles && tiles.length > 0) {
-            renderTiles(tiles);
-        } else {
-            handleEmpty(setupComplete);
-        }
-    });
 
     function getBookmarkSubTree(id) {
         return new Promise(resolve => {
             chrome.bookmarks.getSubTree(String(id), (results) => {
                 resolve(results && results[0] ? results[0] : null);
             });
+        });
+    }
+
+    function loadInitialLayout() {
+        if (initialLayoutLoaded) return;
+        initialLayoutLoaded = true;
+
+        chrome.storage.local.get({ tiles: [], setupComplete: false }, (loc) => {
+            let { tiles, setupComplete } = loc;
+
+            if (tiles && tiles.length > 0) {
+                renderTiles(tiles);
+            } else {
+                handleEmpty(setupComplete);
+            }
         });
     }
 
@@ -301,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openInNewTab: false,
         confirmBeforeRemove: false,
         tileSize: 140,
+        gridColumns: DEFAULT_GRID_COLUMNS,
         desktopBackgroundColor: '#ffffff',
         defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
         desktopBackgroundImage: null,
@@ -317,6 +351,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const alwaysShowMenuIconCheckbox = document.getElementById('setting-always-show-menu-icon');
     const backgroundColorInput = document.getElementById('setting-background-color');
     const defaultTileBackgroundColorInput = document.getElementById('setting-default-tile-background-color');
+    const gridColumnsSlider = document.getElementById('setting-grid-columns');
+    const gridColumnsValue = document.getElementById('setting-grid-columns-value');
     const tileTransparencySlider = document.getElementById('setting-tile-transparency');
     const tileTransparencyValue = document.getElementById('setting-tile-transparency-value');
     const backgroundImageInput = document.getElementById('setting-background-image');
@@ -332,12 +368,16 @@ document.addEventListener('DOMContentLoaded', () => {
         alwaysShowMenuIconCheckbox.checked = globalSettings.alwaysShowMenuIcon;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
+        globalSettings.gridColumns = normalizeGridColumns(globalSettings.gridColumns);
+        updateGridColumnsValue();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        applyGridColumnSetting();
         applyResizeHandleSetting();
         applyMenuIconSetting();
         applyTileTransparencyToAllTiles();
+        loadInitialLayout();
     });
     // Save updated settings on change
     openInNewTabCheckbox.addEventListener('change', () => {
@@ -366,6 +406,11 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultTileBackgroundColorInput.addEventListener('input', () => {
         globalSettings.defaultTileBackgroundColor = defaultTileBackgroundColorInput.value;
         applyTileTransparencyToAllTiles();
+        chrome.storage.local.set({ globalSettings });
+    });
+    gridColumnsSlider.addEventListener('input', () => {
+        globalSettings.gridColumns = normalizeGridColumns(gridColumnsSlider.value);
+        applyGridColumnSetting({ saveTiles: true });
         chrome.storage.local.set({ globalSettings });
     });
     tileTransparencySlider.addEventListener('input', () => {
@@ -408,9 +453,11 @@ document.addEventListener('DOMContentLoaded', () => {
         alwaysShowMenuIconCheckbox.checked = globalSettings.alwaysShowMenuIcon;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
+        updateGridColumnsValue();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
         document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        applyGridColumnSetting({ saveTiles: true });
         applyResizeHandleSetting();
         applyMenuIconSetting();
         applyTileTransparencyToAllTiles();

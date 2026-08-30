@@ -32,6 +32,8 @@ br {
 
 #desktop {
    margin-right: 70px;
+   max-width: calc(100vw - 70px);
+   box-sizing: border-box;
 }
 
 #bubble-message {
