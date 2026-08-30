@@ -762,6 +762,52 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getDefaultTileSize(bookmark) {
+        return bookmark?.url ? { w: 1, h: 1 } : { w: 2, h: 2 };
+    }
+
+    function canPlaceTileAt(x, y, size) {
+        return x >= 0 &&
+            y >= 0 &&
+            x + size.w <= grid.getColumn() &&
+            grid.isAreaEmpty(x, y, size.w, size.h);
+    }
+
+    function findFirstEmptyTilePosition(size) {
+        const gridWidth = grid.getColumn();
+        const lastPossibleX = gridWidth - size.w;
+        const maxRowsToSearch = Math.max(100, grid.getRow() + 100);
+
+        for (let y = 0; y < maxRowsToSearch; y++) {
+            for (let x = 0; x <= lastPossibleX; x++) {
+                if (grid.isAreaEmpty(x, y, size.w, size.h)) {
+                    return { x, y, w: size.w, h: size.h };
+                }
+            }
+        }
+
+        return { x: 0, y: grid.getRow(), w: size.w, h: size.h };
+    }
+
+    function findChildFolderTilePosition(parentNode, bookmark) {
+        const size = getDefaultTileSize(bookmark);
+        if (!parentNode) return findFirstEmptyTilePosition(size);
+
+        const gridWidth = grid.getColumn();
+        const rightX = parentNode.x + parentNode.w;
+        if (canPlaceTileAt(rightX, parentNode.y, size)) {
+            return { x: rightX, y: parentNode.y, w: size.w, h: size.h };
+        }
+
+        const belowX = Math.min(parentNode.x, Math.max(0, gridWidth - size.w));
+        const belowY = parentNode.y + parentNode.h;
+        if (canPlaceTileAt(belowX, belowY, size)) {
+            return { x: belowX, y: belowY, w: size.w, h: size.h };
+        }
+
+        return findFirstEmptyTilePosition(size);
+    }
+
     function addTileToGrid(bookmark, pos) {
         // Check the widget isn't in the grid yet
         const existingNode = findGridNodeById(bookmark.id);
@@ -779,20 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate position for new widgets
         if (!pos) {
-            const w = 2, h = 2;
-            const gridWidth = grid.getColumn();
-            let x = 0, y = 0;
-            let found = false;
-
-            outer: for (y = 0; y < 100; y++) { // max 100 rows
-                for (x = 0; x <= gridWidth - w; x++) {
-                    if (grid.isAreaEmpty(x, y, w, h)) {
-                        found = true;
-                        break outer;
-                    }
-                }
-            }
-            pos = { x, y, w, h };
+            pos = findFirstEmptyTilePosition(getDefaultTileSize(bookmark));
         }
 
         // Compose tile HTML content
@@ -976,22 +1009,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.stopPropagation();
                 const folderId = folderEl.getAttribute('data-id');
                 const node = getGridNode(tileEl);
-                let x = 0, y = 0;
-                if (node) {
-                    const gridWidth = grid.getColumn();
-                    const proposedX = node.x + node.w;
 
-                    if (proposedX + 1 <= gridWidth && grid.isAreaEmpty(proposedX, node.y, 1, 1)) {
-                        x = proposedX;
-                        y = node.y;
-                    } else {
-                        x = node.x;
-                        y = node.y + node.h;
-                    }
-                }
-                const widgetPos = { x, y, w: 1, h: 1 };
                 chrome.bookmarks.getSubTree(folderId, (results) => {
                     if (results && results[0]) {
+                        const widgetPos = findChildFolderTilePosition(node, results[0]);
                         addTileToGrid(results[0], widgetPos);
                     }
                 });
