@@ -238,12 +238,110 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save layout on changes
     grid.on('change', saveLayout);
 
-    function getBookmarkSubTree(id) {
+    function getBookmarkNode(id) {
         return new Promise(resolve => {
-            chrome.bookmarks.getSubTree(String(id), (results) => {
+            chrome.bookmarks.get(String(id), (results) => {
+                if (chrome.runtime.lastError) {
+                    resolve(null);
+                    return;
+                }
                 resolve(results && results[0] ? results[0] : null);
             });
         });
+    }
+
+    function getBookmarkChildren(id) {
+        return new Promise(resolve => {
+            chrome.bookmarks.getChildren(String(id), (children) => {
+                if (chrome.runtime.lastError) {
+                    resolve([]);
+                    return;
+                }
+                resolve(children || []);
+            });
+        });
+    }
+
+    async function getBookmarkForTile(id) {
+        const bookmark = await getBookmarkNode(id);
+        if (!bookmark) return null;
+
+        if (!bookmark.url) {
+            bookmark.children = await getBookmarkChildren(bookmark.id);
+        }
+
+        return bookmark;
+    }
+
+    function createBookmarkSnapshot(bookmark) {
+        const isFolder = !bookmark.url;
+        return {
+            id: String(bookmark.id),
+            title: bookmark.title || '',
+            url: bookmark.url || '',
+            isFolder,
+            children: isFolder ? (bookmark.children || []).map(child => ({
+                id: String(child.id),
+                title: child.title || '',
+                url: child.url || '',
+                isFolder: !child.url
+            })) : []
+        };
+    }
+
+    function getBookmarkFromTileSnapshot(tile) {
+        const snapshot = tile?.bookmarkSnapshot;
+        if (!snapshot) return null;
+
+        const id = snapshot.id || tile.id;
+        if (!id) return null;
+
+        const isFolder = Boolean(snapshot.isFolder);
+        return {
+            id: String(id),
+            title: snapshot.title || (isFolder ? 'Untitled folder' : 'Untitled bookmark'),
+            url: isFolder ? undefined : snapshot.url,
+            children: isFolder ? (snapshot.children || []).map(child => ({
+                id: String(child.id),
+                title: child.title || (child.isFolder ? 'Untitled folder' : 'Untitled bookmark'),
+                url: child.isFolder ? undefined : child.url
+            })) : []
+        };
+    }
+
+    function updateTileInGrid(tileEl, bookmark, pos) {
+        const node = getGridNode(tileEl);
+        const tileHTML = buildTileHTML(bookmark);
+        const content = tileEl.querySelector('.grid-stack-item-content') || tileEl;
+        content.innerHTML = tileHTML;
+
+        if (node) {
+            node.content = tileHTML;
+            node.bookmarkSnapshot = createBookmarkSnapshot(bookmark);
+        }
+
+        applyTileBackground(tileEl, node?.backgroundColor || pos?.backgroundColor);
+        if (!bookmark.url && (node?.textColor || pos?.textColor)) {
+            const title = tileEl.querySelector('.folder-title');
+            if (title) title.style.color = node?.textColor || pos.textColor;
+        }
+
+        addWidgetListeners(!bookmark.url, tileEl);
+    }
+
+    async function refreshTileFromBookmarks(tile) {
+        const bookmark = await getBookmarkForTile(tile.id);
+        const existingNode = findGridNodeById(tile.id);
+        if (!bookmark) {
+            if (existingNode?.el) grid.removeWidget(existingNode.el);
+            return;
+        }
+
+        if (existingNode?.el) {
+            updateTileInGrid(existingNode.el, bookmark, tile);
+        } else {
+            addTileToGrid(bookmark, tile);
+        }
     }
 
     function loadInitialLayout() {
@@ -262,20 +360,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function renderTiles(tiles) {
+        const tileList = Array.isArray(tiles) ? tiles : [];
         suppressLayoutSave = true;
-        grid.batchUpdate();
 
         try {
-            const bookmarks = await Promise.all(tiles.map(async (tile) => ({
-                bookmark: await getBookmarkSubTree(tile.id),
-                tile
-            })));
+            grid.batchUpdate();
+            try {
+                tileList.forEach(tile => {
+                    const cachedBookmark = getBookmarkFromTileSnapshot(tile);
+                    if (cachedBookmark) addTileToGrid(cachedBookmark, tile);
+                });
+            } finally {
+                grid.batchUpdate(false);
+            }
 
-            bookmarks.forEach(({ bookmark, tile }) => {
-                if (bookmark) addTileToGrid(bookmark, tile);
-            });
+            await Promise.all(tileList.map(refreshTileFromBookmarks));
         } finally {
-            grid.batchUpdate(false);
             suppressLayoutSave = false;
             saveLayout();
         }
@@ -542,7 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 h: node.h,
                 id: node.id,
                 backgroundColor: node.backgroundColor || '',
-                textColor: node.textColor || node.el?.querySelector('.folder-title')?.style.color || ''
+                textColor: node.textColor || node.el?.querySelector('.folder-title')?.style.color || '',
+                bookmarkSnapshot: node.bookmarkSnapshot || null
             };
         });
         chrome.storage.local.set({ tiles: layout });
@@ -808,27 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return findFirstEmptyTilePosition(size);
     }
 
-    function addTileToGrid(bookmark, pos) {
-        // Check the widget isn't in the grid yet
-        const existingNode = findGridNodeById(bookmark.id);
-        if (existingNode) {
-            showBubbleMessage("Widget already present!");
-            const tileEl = existingNode.el;
-            if (tileEl) {
-                tileEl.classList.add('widget-flash');
-                tileEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => tileEl.classList.remove('widget-flash'), 1000);
-            }
-
-            return;
-        }
-
-        // Calculate position for new widgets
-        if (!pos) {
-            pos = findFirstEmptyTilePosition(getDefaultTileSize(bookmark));
-        }
-
-        // Compose tile HTML content
+    function buildTileHTML(bookmark) {
         let tileHeaderHTML;
         let tileBodyHTML;
         let tileHeaderTitleText;
@@ -844,7 +925,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const faviconURL = getFavicon(child.url, 16);
                     contentHTML = `
     <a class="bookmark-link" href="${escapeHTML(child.url)}" title="${escapeHTML(child.title)}" target="${openTarget}">
-        <img class="favicon" src="${escapeHTML(faviconURL)}"/>
+        <img class="favicon" src="${escapeHTML(faviconURL)}" loading="lazy" decoding="async"/>
     </a>
     `;
                 } else {
@@ -871,7 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tileBodyHTML = `
               <div class="tile-body center">
                 <a class="bookmark-link" href="${escapeHTML(bookmark.url)}" title="${escapeHTML(bookmark.title)}" target="${openTarget}">
-                    <img class="favicon-large" src="${escapeHTML(faviconURL)}"/>
+                    <img class="favicon-large" src="${escapeHTML(faviconURL)}" decoding="async"/>
                     <div class="bookmark-title">${escapeHTML(bookmark.title)}</div>
                 </a>
               </div>
@@ -899,13 +980,39 @@ document.addEventListener('DOMContentLoaded', () => {
             ${tileBodyHTML}
             </div>
         `;
+        return tileHTML;
+    }
+
+    function addTileToGrid(bookmark, pos) {
+        // Check the widget isn't in the grid yet
+        const existingNode = findGridNodeById(bookmark.id);
+        if (existingNode) {
+            showBubbleMessage("Widget already present!");
+            const tileEl = existingNode.el;
+            if (tileEl) {
+                tileEl.classList.add('widget-flash');
+                tileEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => tileEl.classList.remove('widget-flash'), 1000);
+            }
+
+            return;
+        }
+
+        // Calculate position for new widgets
+        if (!pos) {
+            pos = findFirstEmptyTilePosition(getDefaultTileSize(bookmark));
+        }
+
+        // Compose tile HTML content
+        const tileHTML = buildTileHTML(bookmark);
 
         const widget = grid.addWidget({
             x: pos.x, y: pos.y, w: pos.w, h: pos.h,
             content: tileHTML,
             id: `${bookmark.id}`,
             backgroundColor: pos?.backgroundColor || '',
-            textColor: pos?.textColor || ''
+            textColor: pos?.textColor || '',
+            bookmarkSnapshot: createBookmarkSnapshot(bookmark)
         });
 
         if (!widget) return;
