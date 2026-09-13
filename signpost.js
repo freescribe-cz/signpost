@@ -54,6 +54,7 @@ function removeCachedDesktopBackgroundImage() {
 document.addEventListener('DOMContentLoaded', () => {
 
     const FALLBACK_TILE_BACKGROUND_COLOR = '#dbdbdb';
+    const DEFAULT_LINK_TEXT_COLOR = '#0000ee';
     const DEFAULT_GRID_COLUMNS = 18;
     const MIN_GRID_COLUMNS = 6;
     const MAX_GRID_COLUMNS = 36;
@@ -73,6 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getDefaultTileBackgroundColor() {
         return globalSettings.defaultTileBackgroundColor || FALLBACK_TILE_BACKGROUND_COLOR;
+    }
+
+    function getDefaultLinkTextColor() {
+        return globalSettings.defaultLinkTextColor || DEFAULT_LINK_TEXT_COLOR;
     }
 
     function colorToRgba(color, alpha) {
@@ -108,6 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return null;
+    }
+
+    function normalizeColorPickerValue(color) {
+        const match = String(color || '').trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+        if (!match) return '';
+
+        let value = match[1];
+        if (value.length === 3) {
+            value = value.split('').map(char => char + char).join('');
+        }
+
+        return `#${value.toLowerCase()}`;
     }
 
     function mixChannel(value, target, amount) {
@@ -166,6 +183,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function applyFolderTitleColor(tileEl, color) {
+        if (!color) return;
+
+        const title = tileEl?.querySelector('.folder-title');
+        if (title) title.style.color = color;
+    }
+
+    function applyBookmarkLinkTextColor(tileEl, color) {
+        const tile = tileEl?.querySelector('.tile');
+        if (!tile || tile.classList.contains('folder-tile')) return;
+
+        const linkTextColor = color || getDefaultLinkTextColor();
+        tile.querySelectorAll('.bookmark-link, .bookmark-title').forEach(el => {
+            el.style.color = linkTextColor;
+        });
+    }
+
+    function applyDefaultLinkTextColorToBookmarkTiles() {
+        grid.getGridItems().forEach(item => {
+            const node = getGridNode(item);
+            if (!node?.textColor) {
+                applyBookmarkLinkTextColor(item);
+            }
+        });
+    }
+
     function findGridNodeById(id) {
         return grid.getGridItems()
             .map(item => item.gridstackNode)
@@ -219,9 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
     GridStack.renderCB = function (el, w) {
         el.innerHTML = w.content || '';
         applyTileBackground(el, w.backgroundColor);
-        if (w.textColor) {
-            const content = el.querySelector('.tile');
-            if (content) content.style.color = w.textColor;
+        if (el.querySelector('.folder-tile')) {
+            applyFolderTitleColor(el, w.textColor);
+        } else {
+            applyBookmarkLinkTextColor(el, w.textColor);
         }
     };
     const gridOptions = {
@@ -321,9 +365,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         applyTileBackground(tileEl, node?.backgroundColor || pos?.backgroundColor);
-        if (!bookmark.url && (node?.textColor || pos?.textColor)) {
-            const title = tileEl.querySelector('.folder-title');
-            if (title) title.style.color = node?.textColor || pos.textColor;
+        if (!bookmark.url) {
+            applyFolderTitleColor(tileEl, node?.textColor || pos?.textColor);
+        } else {
+            applyBookmarkLinkTextColor(tileEl, node?.textColor || pos?.textColor);
         }
 
         addWidgetListeners(!bookmark.url, tileEl);
@@ -437,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gridColumns: DEFAULT_GRID_COLUMNS,
         desktopBackgroundColor: '#ffffff',
         defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
+        defaultLinkTextColor: DEFAULT_LINK_TEXT_COLOR,
         desktopBackgroundImage: null,
         tileBackgroundTransparency: 50,
         alwaysShowResizeHandle: false,
@@ -451,6 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const alwaysShowMenuIconCheckbox = document.getElementById('setting-always-show-menu-icon');
     const backgroundColorInput = document.getElementById('setting-background-color');
     const defaultTileBackgroundColorInput = document.getElementById('setting-default-tile-background-color');
+    const defaultLinkTextColorInput = document.getElementById('setting-default-link-text-color');
     const gridColumnsSlider = document.getElementById('setting-grid-columns');
     const gridColumnsValue = document.getElementById('setting-grid-columns-value');
     const tileTransparencySlider = document.getElementById('setting-tile-transparency');
@@ -468,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alwaysShowMenuIconCheckbox.checked = globalSettings.alwaysShowMenuIcon;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
+        defaultLinkTextColorInput.value = getDefaultLinkTextColor();
         globalSettings.gridColumns = normalizeGridColumns(globalSettings.gridColumns);
         updateGridColumnsValue();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
@@ -506,6 +554,11 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultTileBackgroundColorInput.addEventListener('input', () => {
         globalSettings.defaultTileBackgroundColor = defaultTileBackgroundColorInput.value;
         applyTileTransparencyToAllTiles();
+        chrome.storage.local.set({ globalSettings });
+    });
+    defaultLinkTextColorInput.addEventListener('input', () => {
+        globalSettings.defaultLinkTextColor = defaultLinkTextColorInput.value;
+        applyDefaultLinkTextColorToBookmarkTiles();
         chrome.storage.local.set({ globalSettings });
     });
     gridColumnsSlider.addEventListener('input', () => {
@@ -553,6 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alwaysShowMenuIconCheckbox.checked = globalSettings.alwaysShowMenuIcon;
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
+        defaultLinkTextColorInput.value = getDefaultLinkTextColor();
         updateGridColumnsValue();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
@@ -561,6 +615,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyResizeHandleSetting();
         applyMenuIconSetting();
         applyTileTransparencyToAllTiles();
+        applyDefaultLinkTextColorToBookmarkTiles();
         backgroundImageInput.value = '';
         clearDesktopBackgroundImage();
         removeCachedDesktopBackgroundImage();
@@ -958,9 +1013,9 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               `;
         }
-        const textColorItem = !bookmark.url
-            ? `<div class="tile-menu-item set-text-color">Set title color</div>`
-            : '';
+        const textColorItem = bookmark.url
+            ? `<div class="tile-menu-item set-link-text-color">Set link text color</div>`
+            : `<div class="tile-menu-item set-text-color">Set title color</div>`;
         tileHeaderHTML = `
             <div class="tile-header">
                 <div class="folder-title">${tileHeaderTitleText}</div>
@@ -1019,9 +1074,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         requestAnimationFrame(() => {
             applyTileBackground(widget, pos?.backgroundColor);
-            if (!bookmark.url && pos?.textColor) {
-                const title = widget.querySelector('.folder-title');
-                if (title) title.style.color = pos.textColor;
+            if (!bookmark.url) {
+                applyFolderTitleColor(widget, pos?.textColor);
+            } else {
+                applyBookmarkLinkTextColor(widget, pos?.textColor);
             }
         });
 
@@ -1080,7 +1136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (node) node.backgroundColor = color;
 
                 saveLayout();
-            });
+            }, getGridNode(tileEl)?.backgroundColor || getDefaultTileBackgroundColor());
         });
         // Reset background color
         tileEl.querySelector('.reset-bg-color')?.addEventListener('click', (e) => {
@@ -1098,15 +1154,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // Set text color
             tileEl.querySelector('.set-text-color')?.addEventListener('click', (e) => {
                 e.stopPropagation();
+                tileEl.querySelector('.tile-menu')?.classList.add('hidden');
+                const node = getGridNode(tileEl);
                 openColorPicker((color) => {
-                    const title = tileEl.querySelector('.folder-title');
-                    if (title) {
-                        title.style.color = color;
-                    }
-                    const node = getGridNode(tileEl);
+                    applyFolderTitleColor(tileEl, color);
                     if (node) node.textColor = color;
                     saveLayout();
-                });
+                }, node?.textColor || tileEl.querySelector('.folder-title')?.style.color || '#000000');
+            });
+        } else {
+            tileEl.querySelector('.set-link-text-color')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                tileEl.querySelector('.tile-menu')?.classList.add('hidden');
+                const node = getGridNode(tileEl);
+                openColorPicker((color) => {
+                    applyBookmarkLinkTextColor(tileEl, color);
+                    if (node) node.textColor = color;
+                    saveLayout();
+                }, node?.textColor || getDefaultLinkTextColor());
             });
         }
 
@@ -1128,9 +1193,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    function openColorPicker(onChange) {
+    function openColorPicker(onChange, initialColor) {
         const picker = document.createElement('input');
         picker.type = 'color';
+        picker.value = normalizeColorPickerValue(initialColor) || '#000000';
         picker.style.position = 'absolute';
         picker.style.left = '-9999px';
 
