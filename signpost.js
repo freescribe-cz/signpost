@@ -55,6 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const FALLBACK_TILE_BACKGROUND_COLOR = '#dbdbdb';
     const DEFAULT_LINK_TEXT_COLOR = '#0000ee';
+    const DEFAULT_DESKTOP_TEXT_SIZE = 14;
+    const MIN_DESKTOP_TEXT_SIZE = 8;
+    const MAX_DESKTOP_TEXT_SIZE = 24;
     const DEFAULT_GRID_COLUMNS = 18;
     const MIN_GRID_COLUMNS = 6;
     const MAX_GRID_COLUMNS = 36;
@@ -223,6 +226,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tileTransparencyValue) {
             tileTransparencyValue.textContent = `${globalSettings.tileBackgroundTransparency}%`;
         }
+    }
+
+    function normalizeDesktopTextSize(value) {
+        const textSize = Number.parseInt(value, 10);
+        if (!Number.isFinite(textSize)) return DEFAULT_DESKTOP_TEXT_SIZE;
+        return Math.min(MAX_DESKTOP_TEXT_SIZE, Math.max(MIN_DESKTOP_TEXT_SIZE, textSize));
+    }
+
+    function updateDesktopTextSizeValue() {
+        const textSize = normalizeDesktopTextSize(globalSettings.desktopTextSize);
+        if (desktopTextSizeSlider) desktopTextSizeSlider.value = textSize;
+        if (desktopTextSizeValue) desktopTextSizeValue.textContent = textSize;
+    }
+
+    function applyDesktopTextSizeSetting() {
+        const textSize = normalizeDesktopTextSize(globalSettings.desktopTextSize);
+        globalSettings.desktopTextSize = textSize;
+        updateDesktopTextSizeValue();
+        document.body.style.fontSize = `${textSize}px`;
     }
 
     function normalizeGridColumns(value) {
@@ -481,6 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tileSize: 140,
         gridColumns: DEFAULT_GRID_COLUMNS,
         desktopBackgroundColor: '#ffffff',
+        desktopTextSize: DEFAULT_DESKTOP_TEXT_SIZE,
         defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
         defaultLinkTextColor: DEFAULT_LINK_TEXT_COLOR,
         desktopBackgroundImage: null,
@@ -498,6 +521,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const backgroundColorInput = document.getElementById('setting-background-color');
     const defaultTileBackgroundColorInput = document.getElementById('setting-default-tile-background-color');
     const defaultLinkTextColorInput = document.getElementById('setting-default-link-text-color');
+    const desktopTextSizeSlider = document.getElementById('setting-desktop-text-size');
+    const desktopTextSizeValue = document.getElementById('setting-desktop-text-size-value');
     const gridColumnsSlider = document.getElementById('setting-grid-columns');
     const gridColumnsValue = document.getElementById('setting-grid-columns-value');
     const tileTransparencySlider = document.getElementById('setting-tile-transparency');
@@ -516,6 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         defaultLinkTextColorInput.value = getDefaultLinkTextColor();
+        applyDesktopTextSizeSetting();
         globalSettings.gridColumns = normalizeGridColumns(globalSettings.gridColumns);
         updateGridColumnsValue();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
@@ -559,6 +585,11 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultLinkTextColorInput.addEventListener('input', () => {
         globalSettings.defaultLinkTextColor = defaultLinkTextColorInput.value;
         applyDefaultLinkTextColorToBookmarkTiles();
+        chrome.storage.local.set({ globalSettings });
+    });
+    desktopTextSizeSlider.addEventListener('input', () => {
+        globalSettings.desktopTextSize = normalizeDesktopTextSize(desktopTextSizeSlider.value);
+        applyDesktopTextSizeSetting();
         chrome.storage.local.set({ globalSettings });
     });
     gridColumnsSlider.addEventListener('input', () => {
@@ -607,6 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
         backgroundColorInput.value = globalSettings.desktopBackgroundColor;
         defaultTileBackgroundColorInput.value = getDefaultTileBackgroundColor();
         defaultLinkTextColorInput.value = getDefaultLinkTextColor();
+        applyDesktopTextSizeSetting();
         updateGridColumnsValue();
         tileTransparencySlider.value = globalSettings.tileBackgroundTransparency;
         updateTileTransparencyValue();
@@ -1002,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               `;
         } else { // LINKS
-            const faviconURL = getFavicon(bookmark.url, 32);
+            const faviconURL = getFavicon(bookmark.url, 64);
             tileHeaderTitleText = "";
             tileBodyHTML = `
               <div class="tile-body center">

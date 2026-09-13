@@ -225,6 +225,12 @@ button:hover {
    border-bottom: 0;
 }
 
+.settings-separator {
+   height: 1px;
+   margin: 0;
+   background: rgba(45, 43, 39, 0.1);
+}
+
 .setting-row span {
    min-width: 0;
 }
@@ -828,10 +834,10 @@ body.always-show-menu-icon .tile-menu-icon {
 }
 
 .favicon-large {
-   width: 32px;
-   height: 32px;
+   width: 2.2857em;
+   height: 2.2857em;
    display: block;
-   margin: 0 auto 4px;
+   margin: 0 auto 0.2857em;
 }
 
 .tile-drag-handle {

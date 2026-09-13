@@ -71,6 +71,7 @@
                     <input type="file" id="setting-background-image" accept="image/*" />
                 </label>
                 <button id="clear-background" class="secondary-action">Clear background color and image</button>
+                <div class="settings-separator" aria-hidden="true"></div>
                 <label class="setting-row range-setting">
                     <span>
                         <strong>Number of columns</strong>
@@ -78,6 +79,13 @@
                             number makes the tiles smaller.</small>
                     </span>
                     <input type="range" id="setting-grid-columns" min="6" max="36" step="1" />
+                </label>
+                <label class="setting-row range-setting">
+                    <span>
+                        <strong>Text size</strong>
+                        <small><span id="setting-desktop-text-size-value">14</span> px.</small>
+                    </span>
+                    <input type="range" id="setting-desktop-text-size" min="8" max="24" step="1" />
                 </label>
             </section>
 
