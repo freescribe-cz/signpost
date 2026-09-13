@@ -1,6 +1,6 @@
 {
   "name": "Signpost: Visual Bookmarks for New Tab",
-  "description": "Visual bookmark dashboard for your new tab. Arrange Chrome bookmarks on a customizable desktop. Add bookmarks to the desktop from open sites.",
+  "description": "Visual bookmark dashboard for your new tab. Arrange Chrome bookmarks on a customizable desktop. Add links from open sites.",
   "version": "3.1",
   "manifest_version": 3,
   "chrome_url_overrides": {
