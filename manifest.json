@@ -1,6 +1,6 @@
 {
-  "name": "Signpost: Visual Bookmarks for New Tab",
-  "description": "Visual bookmark dashboard for your new tab. Arrange Chrome bookmarks on a customizable desktop. Add links from open sites.",
+  "name": "Signpost: Visual Bookmark Manager for New Tab",
+  "description": "Customizable new tab bookmark manager with visual tiles, drag-and-drop layouts, wallpapers, colors, and quick bookmark saving.",
   "version": "3.1",
   "manifest_version": 3,
   "chrome_url_overrides": {
