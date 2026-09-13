@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnStartEmpty?.addEventListener('click', () => {
         chrome.storage.local.set({ setupComplete: true });
         closeModal(setupModal);
-        showBubbleMessage('Start with an empty grid');
+        showBubbleMessage('Start with an empty desktop');
     });
 
     const defaultSettings = {
@@ -1074,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check the widget isn't in the grid yet
         const existingNode = findGridNodeById(bookmark.id);
         if (existingNode) {
-            showBubbleMessage("Widget already present!");
+            showBubbleMessage("Tile already present!");
             const tileEl = existingNode.el;
             if (tileEl) {
                 tileEl.classList.add('widget-flash');
@@ -1152,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Remove widget on menu click
         tileEl.querySelector('.remove-tile')?.addEventListener('click', () => {
-            if (!globalSettings.confirmBeforeRemove || confirm("Remove this widget?")) {
+            if (!globalSettings.confirmBeforeRemove || confirm("Remove this tile?")) {
                 grid.removeWidget(tileEl);
                 saveLayout();
             }
